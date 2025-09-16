@@ -1,16 +1,28 @@
-# zainpos_merchant_mobile
+# ZainPOS Merchant Mobile
 
-A new Flutter project.
+A Flutter application for managing POS terminals, transfers, and transaction monitoring.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## ✨ Features
+- 🔐 Secure PIN entry for transactions
+- 💸 Wallet balance and virtual account display
+- 📊 Transaction history with filters and search
+- ⚙️ Customizable terminal settings (transfers, balance, reprint)
+- Responsive UI for different screen sizes
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🛠️ Installation & Setup
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Prerequisites
+- [Flutter SDK](https://flutter.dev/docs/get-started/install) (3.x or later)
+- [Dart](https://dart.dev/get-dart)
+- Android Studio or VS Code with Flutter extensions
+
+### Steps
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/<your-username>/zainpos_merchant_mobile.git
+   cd zainpos_merchant_mobile
+
