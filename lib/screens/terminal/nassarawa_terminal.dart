@@ -9,7 +9,7 @@ import 'package:zainpos_merchant_mobile/screens/terminal/widgets/transaction_lis
 import 'package:zainpos_merchant_mobile/screens/transfers/transfer_screen.dart';
 
 class NassarawaTerminalScreen extends StatelessWidget {
-  NassarawaTerminalScreen({super.key});
+ const NassarawaTerminalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -167,23 +167,26 @@ class NassarawaTerminalScreen extends StatelessWidget {
                           padding: EdgeInsets.zero,
                           labelPadding: EdgeInsets.zero,
                           indicatorSize: TabBarIndicatorSize.tab,
+
                           indicator: BoxDecoration(
-                            color: Color(0xFFEFEFEF),        // active tab color
-                            borderRadius: BorderRadius.circular(8),
+                            color: Color(0xFFEFEFEF),
+                            border: Border.all(color: Colors.grey),      // keeps border line
+                            borderRadius: BorderRadius.circular(8),      // same radius as container
                           ),
                           labelColor: Colors.black,
                           unselectedLabelColor: Colors.black54,
-                          tabs: [
+                          tabs: const [
                             Tab(text: 'POS Transfer'),
                             Tab(text: 'Card'),
                             Tab(text: 'Fund Transfer'),
                           ],
                         ),
 
+                        // vertical dividers stay on top
                         Positioned.fill(
                           child: IgnorePointer(
                             child: Row(
-                              children: [
+                              children: const [
                                 Expanded(child: SizedBox()),
                                 VerticalDivider(width: 1, color: Colors.grey),
                                 Expanded(child: SizedBox()),
@@ -197,7 +200,7 @@ class NassarawaTerminalScreen extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(height: basePadding / 2),
+                  // SizedBox(height: basePadding / 2),
 
                   // Transactions list
                   SizedBox(
