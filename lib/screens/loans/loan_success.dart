@@ -17,6 +17,7 @@ class LoanSuccess extends StatelessWidget {
     final amount = 200000;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(

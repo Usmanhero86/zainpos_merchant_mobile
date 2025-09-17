@@ -69,7 +69,9 @@ class _LoanRequestScreenState extends State<LoanRequestScreen> {
     final buttonFontSize = screenWidth * 0.045;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black, size: screenWidth * 0.06),
           onPressed: () => Navigator.pop(context),

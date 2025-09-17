@@ -12,14 +12,14 @@ class LoanDetailsScreen extends StatelessWidget {
     final screenWidth = size.width;
     final screenHeight = size.height;
 
-    // ✅ Responsive values
-    final horizontalPadding = screenWidth * 0.04; // ~16 on small screens
-    final verticalSpacing = screenHeight * 0.02;  // spacing blocks
-    final headerFontSize = screenWidth * 0.06;    // ~24 on small screens
-    final sectionFontSize = screenWidth * 0.045;  // ~18 on small screens
+    final horizontalPadding = screenWidth * 0.04;
+    final verticalSpacing = screenHeight * 0.02;
+    final headerFontSize = screenWidth * 0.06;
+    final sectionFontSize = screenWidth * 0.045;
     final detailSpacing = screenHeight * 0.018;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back, size: screenWidth * 0.06),
@@ -50,7 +50,7 @@ class LoanDetailsScreen extends StatelessWidget {
             SizedBox(height: verticalSpacing * 1.2),
 
             // Loan Amount Card
-            const LoanAmountCard(),
+            LoanAmountCard(),
             SizedBox(height: verticalSpacing * 1.2),
 
             // Details Section
@@ -65,19 +65,19 @@ class LoanDetailsScreen extends StatelessWidget {
             SizedBox(height: detailSpacing),
 
             // Loan Details
-            const DetailItem(title: 'Loan Balance', value: 'N22,500.00'),
+            DetailItem(title: 'Loan Balance', value: 'N22,500.00'),
             SizedBox(height: detailSpacing),
 
-            const DetailItem(title: 'Next payment date', value: '2025-06-16'),
+            DetailItem(title: 'Next payment date', value: '2025-06-16'),
             SizedBox(height: detailSpacing),
 
-            const DetailItem(title: 'Loan opening date', value: '2024-12-16'),
+            DetailItem(title: 'Loan opening date', value: '2024-12-16'),
             SizedBox(height: detailSpacing),
 
-            const DetailItem(title: 'Loan maturity date', value: '2025-12-16'),
+            DetailItem(title: 'Loan maturity date', value: '2025-12-16'),
             SizedBox(height: detailSpacing),
 
-            const DetailItem(title: 'Tenure', value: '12 Months'),
+            DetailItem(title: 'Tenure', value: '12 Months'),
             SizedBox(height: verticalSpacing * 1.5),
 
             // Payment History Section
@@ -91,14 +91,14 @@ class LoanDetailsScreen extends StatelessWidget {
             SizedBox(height: detailSpacing),
 
             // Payment History Items
-            const PaymentHistoryItem(
+            PaymentHistoryItem(
               title: 'Loan Payment',
               date: '2024-02-16',
               amount: 'N12,500.00',
             ),
             SizedBox(height: detailSpacing),
 
-            const PaymentHistoryItem(
+            PaymentHistoryItem(
               title: 'Loan Payment',
               date: '2024-01-16',
               amount: 'N12,500.00',

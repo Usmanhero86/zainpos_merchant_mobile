@@ -9,7 +9,7 @@ import 'package:zainpos_merchant_mobile/screens/terminal/widgets/transaction_lis
 import 'package:zainpos_merchant_mobile/screens/transfers/transfer_screen.dart';
 
 class NassarawaTerminalScreen extends StatelessWidget {
-  const NassarawaTerminalScreen({super.key});
+  NassarawaTerminalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class NassarawaTerminalScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -54,14 +54,14 @@ class NassarawaTerminalScreen extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TransferScreen()),
+              MaterialPageRoute(builder: (_) => TransferScreen()),
             );
           },
           child: Image.asset('assets/logos/sendIcon.png', height: 24, width: 24),
         ),
         body: LayoutBuilder(
-          builder: (context, constraints) {
-            final maxWidth = constraints.maxWidth;
+          builder: (context,raints) {
+            final maxWidth =raints.maxWidth;
             final tabHeight = maxWidth > 600 ? 400.0 : 300.0;
 
             return SingleChildScrollView(
@@ -148,45 +148,61 @@ class NassarawaTerminalScreen extends StatelessWidget {
                             fontSize: isTablet ? 14 : 12,
                           ),
                         ),
-                        backgroundColor: const Color(0xFFEAF1FF),
+                        backgroundColor: Color(0xFFEAF1FF),
                       ),
                     ],
                   ),
                   SizedBox(height: basePadding / 2),
 
                   // Tabs
-            Container(
-            decoration: BoxDecoration(
-            color: Colors.white,
-            border: BoxBorder.all(),
-            borderRadius: BorderRadius.circular(8),
-            ),
-            child: TabBar(
-              isScrollable: true,
-              indicator: RoundedBoxIndicator(
-                color: Color(0xFFEFEFEF),
-                insets: EdgeInsets.all(1),
-              ),
-              labelColor: Colors.black,
-              labelStyle: TextStyle(fontSize: isTablet ? 16 : 14),
-              dividerColor: Colors.transparent,
-              indicatorWeight: 0,
-              tabs: [
-                buildTabWithDivider('POS Transfer', showRightDivider: true),
-                buildTabWithDivider('Card', showRightDivider: true),
-                buildTabWithDivider('Fund Transfer'),
-              ],
-            )
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Stack(
+                      children: [
+                        TabBar(
+                          padding: EdgeInsets.zero,
+                          labelPadding: EdgeInsets.zero,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          indicator: BoxDecoration(
+                            color: Color(0xFFEFEFEF),        // active tab color
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          labelColor: Colors.black,
+                          unselectedLabelColor: Colors.black54,
+                          tabs: [
+                            Tab(text: 'POS Transfer'),
+                            Tab(text: 'Card'),
+                            Tab(text: 'Fund Transfer'),
+                          ],
+                        ),
 
-            ),
-
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: Row(
+                              children: [
+                                Expanded(child: SizedBox()),
+                                VerticalDivider(width: 1, color: Colors.grey),
+                                Expanded(child: SizedBox()),
+                                VerticalDivider(width: 1, color: Colors.grey),
+                                Expanded(child: SizedBox()),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   SizedBox(height: basePadding / 2),
 
                   // Transactions list
                   SizedBox(
                     height: tabHeight,
-                    child: const TabBarView(
+                    child: TabBarView(
                       children: [
                         TransactionList(),
                         TransactionList(),

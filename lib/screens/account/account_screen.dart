@@ -14,7 +14,7 @@ class AccountScreen extends StatelessWidget {
     final double titleFont = width * 0.055;
     final double nameFont = width * 0.07;
     final double smallFont = width * 0.04;
-    final double avatarRadius = width * 0.18;
+    final double avatarRadius = width * 0.064;
     final double spacing = height * 0.02;
 
     return Scaffold(
@@ -40,12 +40,12 @@ class AccountScreen extends StatelessWidget {
 
             // Profile header
             CircleAvatar(
-              radius: avatarRadius,
+              radius: 64,
               backgroundColor: Colors.blue[50],
               child: Text(
                 'GM',
                 style: TextStyle(
-                  fontSize: avatarRadius * 0.8,
+                  fontSize: 40,
                   fontWeight: FontWeight.bold,
                   color: Colors.blue,
                 ),
@@ -100,8 +100,8 @@ class AccountScreen extends StatelessWidget {
             ActionButton(
               icon: Image.asset(
                 'assets/logos/featuredIcon.png',
-                height: width * 0.1,
-                width: width * 0.1,
+                height: 38,
+                width: 38,
               ),
               text: 'Change Password',
               textSize: smallFont,
@@ -112,8 +112,8 @@ class AccountScreen extends StatelessWidget {
             ActionButton(
               icon: Image.asset(
                 'assets/logos/FeaturedIcon2.png',
-                height: width * 0.1,
-                width: width * 0.1,
+                height:38,
+                width: 38,
               ),
               text: 'Set PIN',
               textSize: smallFont,
@@ -124,8 +124,8 @@ class AccountScreen extends StatelessWidget {
             ActionButton(
               icon: Image.asset(
                 'assets/logos/FeaturedIcon3.png',
-                height: width * 0.1,
-                width: width * 0.1,
+                height:38,
+                width: 38,
               ),
               text: 'Log Out',
               textSize: smallFont,

@@ -80,8 +80,7 @@ class _DisputeScreenState extends State<DisputeScreen> {
         separatorBuilder: (context, index) => Divider(
           color: Colors.grey[200],
           thickness: dividerThickness,
-          height: h * 0.01,
-        ),
+          height: h * 0.01),
         itemBuilder: (context, index) {
           return DisputeItem(transaction: transactions[index]);
         },

@@ -9,8 +9,9 @@ class TerminalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: ()=>  Navigator.push(context, MaterialPageRoute(builder: (context)=>
+    return InkWell(
+      hoverColor: Colors.white,
+      onTap: () =>  Navigator.push(context, MaterialPageRoute(builder: (context)=>
           NassarawaTerminalScreen())),
       child: Padding(
         padding: EdgeInsets.all(16.0),
