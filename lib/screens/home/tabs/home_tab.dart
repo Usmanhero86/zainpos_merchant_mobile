@@ -66,13 +66,15 @@ class HomeTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
              TextButton(
                onPressed: (){},
-               style: ButtonStyle(
-                 side: WidgetStateProperty.all(BorderSide(color: Colors.blue))
+               style: TextButton.styleFrom(
+                 minimumSize: Size(250, 40),
+                   padding: EdgeInsets.symmetric(horizontal: 16),
+                   side: BorderSide(color: Colors.blue)
                ),
                child: Row(
+                 mainAxisSize: MainAxisSize.min,
                  children: [
                    Icon(Icons.mail,color: Colors.blue),
                    SizedBox(width: 5),
