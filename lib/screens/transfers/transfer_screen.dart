@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zainpos_merchant_mobile/screens/pin/pin_entry.dart';
 
 class TransferScreen extends StatefulWidget {
-  const TransferScreen({super.key});
+ const TransferScreen({super.key});
 
   @override
   State<TransferScreen> createState() => _TransferScreenState();
@@ -15,17 +15,18 @@ class _TransferScreenState extends State<TransferScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Transfer'),
+        title: Text('Transfer'),
         centerTitle: false,
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -38,10 +39,10 @@ class _TransferScreenState extends State<TransferScreen> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
                 ),
                 value: selectedBank,
-                items: const [
+                items: [
                   DropdownMenuItem(
                       value: 'Wema Bank', child: Text('Wema Bank')),
                   DropdownMenuItem(

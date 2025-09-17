@@ -17,6 +17,7 @@ class ResolvedTransactionScreen extends StatelessWidget {
     );
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back),

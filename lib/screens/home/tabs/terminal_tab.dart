@@ -24,7 +24,9 @@ class _TerminalsTabState extends State<TerminalsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title:  Text('Terminals', style: TextStyle(fontWeight: FontWeight.bold),),
         actions: [
           IconButton(onPressed: (){}, icon:  Image(

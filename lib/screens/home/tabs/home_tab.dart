@@ -62,7 +62,7 @@ class HomeTab extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(padding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -77,7 +77,7 @@ class HomeTab extends StatelessWidget {
                  mainAxisSize: MainAxisSize.min,
                  children: [
                    Icon(Icons.mail,color: Colors.blue),
-                   SizedBox(width: 5),
+                   SizedBox(width: padding - 11),
                    Text(
                     'Gidado Mustapha Enterprises',
                     style: TextStyle(

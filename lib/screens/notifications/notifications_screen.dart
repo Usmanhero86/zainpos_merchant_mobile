@@ -7,6 +7,7 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text('Back to Home',style: TextStyle(color: Colors.black38),),
@@ -44,27 +45,6 @@ class NotificationsScreen extends StatelessWidget {
               description: 'Your loan 120,000.00 is due for repayment on Wednesday, 29th June 2025',
               isImportant: false,
             ),
-
-            // // Additional sample notifications
-            // const SizedBox(height: 16),
-            // NotificationCard(
-            //   title: 'Payment received',
-            //   date: 'April 15, 2025',
-            //   description: 'Your payment of N25,000.00 has been successfully processed.',
-            //   isImportant: false,
-            // ),
-            //
-            // const SizedBox(height: 16),
-            // NotificationCard(
-            //   title: 'Account update required',
-            //   date: 'April 10, 2025',
-            //   description: 'Please update your profile information to continue using our services.',
-            //   actionText: 'Update Profile',
-            //   onActionPressed: () {
-            //     // Handle update profile action
-            //   },
-            //   isImportant: true,
-            // ),
           ],
         ),
       ),

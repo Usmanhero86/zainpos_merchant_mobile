@@ -56,8 +56,7 @@ class ActionButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: fontScale,
                   fontWeight: FontWeight.w500,
-                  color: textColor ??
-                      (isLogout ? Colors.redAccent : Colors.grey[800]),
+                  color: Colors.grey[800],
                 ),
               ),
             ),

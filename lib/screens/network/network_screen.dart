@@ -8,7 +8,9 @@ class NetworkSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon:  Icon(Icons.arrow_back, color: Colors.black,),
           onPressed: () => Navigator.pop(context),
@@ -37,20 +39,18 @@ class NetworkSelectionScreen extends StatelessWidget {
               color: Colors.white,
               child: Column(
                 children: [
-                  // Bank Transfer Option
                   buildNetworkOption(
                     icon: Image(image: AssetImage('assets/logos/bank.png'),
                     height: 24, width: 24,),
                     title: 'Bank Transfer',
                     description: 'Transfer funds directly from your bank account',
                     onTap: () {
-                      // Handle bank transfer selection
                       Navigator.push(context, MaterialPageRoute(
                           builder: (context) => BankSelectionScreen()));
                     },
                   ),
                   Padding(
-                    padding:  EdgeInsets.all(8.0),
+                    padding:  EdgeInsets.only(left: 8.0, right: 8.0),
                     child: Divider(),
                   ),
                   // Card Payment Option
@@ -81,9 +81,8 @@ class NetworkSelectionScreen extends StatelessWidget {
   }) {
     return Column(
       children: [
-        InkWell(
+        GestureDetector(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding:  EdgeInsets.all(16.0),
             child: Row(
