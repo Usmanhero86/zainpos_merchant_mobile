@@ -73,102 +73,104 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final spacingBetweenButtons = screenWidth * 0.05;
 
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onPanDown: (_) {
-                setState(() => _userSwiped = true);
-              },
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: pages.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onPanDown: (_) {
+                  setState(() => _userSwiped = true);
                 },
-                itemBuilder: (context, index) => pages[index],
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: pages.length,
+                  onPageChanged: (index) {
+                    setState(() => _currentPage = index);
+                  },
+                  itemBuilder: (context, index) => pages[index],
+                ),
               ),
             ),
-          ),
-
-          SizedBox(height: screenHeight * 0.04),
-
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: buttonHorizontalPadding,
-                      vertical: buttonVerticalPadding,
+        
+            SizedBox(height: screenHeight * 0.04),
+        
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: buttonHorizontalPadding,
+                        vertical: buttonVerticalPadding,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, AppRouter.login);
-                  },
-                  child: Text(
-                    "Login",
-                    style: TextStyle(color: Colors.blue,
-                        fontWeight: FontWeight.bold,fontSize: screenWidth * 0.04),
-                  ),
-                ),
-                SizedBox(width: spacingBetweenButtons),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: buttonHorizontalPadding,
-                      vertical: buttonVerticalPadding,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, AppRouter.login);
+                    },
+                    child: Text(
+                      "Login",
+                      style: TextStyle(color: Colors.blue,
+                          fontWeight: FontWeight.bold,fontSize: screenWidth * 0.04),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, AppRouter.signup);
-                  },
-                  child: Text(
-                    "Signup",
+                  SizedBox(width: spacingBetweenButtons),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: buttonHorizontalPadding,
+                        vertical: buttonVerticalPadding,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, AppRouter.signup);
+                    },
+                    child: Text(
+                      "Signup",
+                      style: TextStyle(
+                          color:Colors.white,
+                          fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        
+            SizedBox(height: screenHeight * 0.05),
+        
+            Padding(
+              padding: EdgeInsets.only(bottom: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Licensed by Central Bank of Nigeria (CBN)',
                     style: TextStyle(
-                        color:Colors.white,
-                        fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.bold
+                      color: Colors.black,
+                      fontSize: 12,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: screenHeight * 0.05),
-
-          Padding(
-            padding: EdgeInsets.only(bottom: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Licensed by Central Bank of Nigeria (CBN)',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
+                  SizedBox(width: 6),
+                  Image.asset(
+                    'assets/logos/cbn2.png',
+                    height: 20,
+                    width: 20,
                   ),
-                ),
-                SizedBox(width: 6),
-                Image.asset(
-                  'assets/logos/cbn2.png',
-                  height: 20,
-                  width: 20,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
