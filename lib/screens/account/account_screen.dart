@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:zainpos_merchant_mobile/screens/account/password/change_password_screen.dart';
+import 'package:zainpos_merchant_mobile/screens/account/password/set_pin_screen.dart';
 import 'widgets/action_button.dart';
 import '../../widgets/build_info_section.dart';
 
@@ -105,7 +107,10 @@ class AccountScreen extends StatelessWidget {
               ),
               text: 'Change Password',
               textSize: smallFont,
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (context)=> ChangePasswordScreen()));
+              },
             ),
             SizedBox(height: spacing),
 
@@ -117,7 +122,10 @@ class AccountScreen extends StatelessWidget {
               ),
               text: 'Set PIN',
               textSize: smallFont,
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(
+                    builder: (context)=> SetPinScreen()));
+              },
             ),
             SizedBox(height: spacing),
 
