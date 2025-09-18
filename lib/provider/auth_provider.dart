@@ -9,7 +9,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await Future.delayed(const Duration(seconds: 2));
-      // Simulate success
       return true;
     } catch (e) {
       return false;
