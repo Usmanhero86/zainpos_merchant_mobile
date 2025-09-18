@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:zainpos_merchant_mobile/screens/searchs/search_and_filter.dart';
-import 'package:zainpos_merchant_mobile/screens/settings/settings_screen.dart';
-import 'package:zainpos_merchant_mobile/screens/terminal/widgets/rounded_box_indicator.dart';
 import 'package:zainpos_merchant_mobile/screens/terminal/widgets/show_filter.dart';
 import 'package:zainpos_merchant_mobile/screens/terminal/widgets/show_settings.dart';
-import 'package:zainpos_merchant_mobile/screens/terminal/widgets/tab_with_divider.dart';
 import 'package:zainpos_merchant_mobile/screens/terminal/widgets/transaction_list.dart';
 import 'package:zainpos_merchant_mobile/screens/transfers/transfer_screen.dart';
 
@@ -60,7 +56,7 @@ class NassarawaTerminalScreen extends StatelessWidget {
           child: Image.asset('assets/logos/sendIcon.png', height: 24, width: 24),
         ),
         body: LayoutBuilder(
-          builder: (context,raints) {
+          builder: (context, raints) {
             final maxWidth =raints.maxWidth;
             final tabHeight = maxWidth > 600 ? 400.0 : 300.0;
 

@@ -37,6 +37,8 @@ dependencies:
   provider:
   intl:
   flutter_rating_bar:
+  http:
+  flutter_secure_storage:
 
 dev_dependencies:
   flutter_test:

@@ -20,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeTab(),
     TransactionsTab(),
     TerminalsTab(),
-    // The More tab is handled by a nested navigator
     SizedBox.shrink(),
   ];
 
