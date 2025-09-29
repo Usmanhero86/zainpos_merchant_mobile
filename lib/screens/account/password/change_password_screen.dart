@@ -1,126 +1,259 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../provider/change_password_provider.dart';
+import '../../../provider/login_provider.dart';
 import '../widgets/password_field.dart';
 
-class ChangePasswordScreen extends StatelessWidget {
+class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+}
 
-    final size = MediaQuery.of(context).size;
-    final isTablet = size.width >= 600;
-    final isLarge = size.width >= 900;
+class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  final currentCtrl = TextEditingController();
+  final newCtrl = TextEditingController();
+  final confirmCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-    final horizontalPadding = isLarge
-        ? size.width * 0.2
-        : isTablet
-        ? size.width * 0.1
-        : 16.0;
+  @override
+  void dispose() {
+    currentCtrl.dispose();
+    newCtrl.dispose();
+    confirmCtrl.dispose();
+    super.dispose();
+  }
 
-    final titleFontSize = isLarge
-        ? 28.0
-        : isTablet
-        ? 22.0
-        : 18.0;
+  void _handleChangePassword() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    final buttonHeight = isTablet ? 56.0 : 48.0;
-    final spacing = isTablet ? 24.0 : 16.0;
+    if (newCtrl.text != confirmCtrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        title: Row(
+    final provider = context.read<ChangePasswordProvider>();
+
+    await provider.changePassword(
+      currentPassword: currentCtrl.text.trim(),
+      newPassword: newCtrl.text.trim(),
+      confirmPassword: confirmCtrl.text.trim(),
+    );
+
+    if (provider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(provider.error!)),
+      );
+    } else if (provider.response != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.response!.message),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      _logoutAndRedirect();
+    }
+  }
+
+  void _logoutAndRedirect() async {
+    final loginProvider = context.read<LoginProvider>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
-            Flexible(
-              child: Text(
-                'Back to Account',
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: isTablet ? 16 : 14,
-                  color: Colors.black38,
-                ),
-              ),
-            ),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Logging out...'),
           ],
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: size.height * 0.85),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: spacing / 2),
-                  Text(
-                    'Change Password',
-                    style: TextStyle(
-                      fontSize: titleFontSize,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Divider(height: 24, thickness: 1),
+    );
 
-                  // Input fields
-                  const PasswordField(hint: 'Enter Current Password'),
-                  SizedBox(height: spacing),
-                  const PasswordField(hint: 'Enter New Password'),
-                  SizedBox(height: spacing),
-                  const PasswordField(hint: 'Confirm New Password'),
-                  SizedBox(height: spacing),
+    await Future.delayed(const Duration(seconds: 2));
+    await loginProvider.logout();
 
-                  // Info text
-                  Text(
-                    'You will be logged out once your password is changed and you can sign in with your new password.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                      height: 1.4,
-                      fontSize: isTablet ? 15 : null,
-                    ),
-                  ),
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+            (route) => false,
+      );
+    }
+  }
 
-                  const Spacer(),
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter password';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
 
-                  // Change Password Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: buttonHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: integrate API call here
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF007BFF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: Text(
-                        'Change Password',
-                        style: TextStyle(
-                          fontSize: isTablet ? 18 : 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: spacing),
-                ],
-              ),
-            ),
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<ChangePasswordProvider>();
+    final size = MediaQuery.of(context).size;
+    final isTablet = size.width >= 600;
+    final isDesktop = size.width >= 1024;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: isDesktop ? null : AppBar(
+        title: Text(
+          'Change Password',
+          style: TextStyle(
+            fontSize: isTablet ? 20 : 18,
           ),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? size.width * 0.1 : 0,
+                vertical: isDesktop ? size.height * 0.05 : 0,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: IntrinsicHeight(
+                  child: Center(
+                    child: Container(
+                      constraints: isDesktop
+                          ? const BoxConstraints(maxWidth: 500)
+                          : null,
+                      child: Form(
+                        key: _formKey,
+                        child: Padding(
+                          padding: EdgeInsets.all(isDesktop ? 32 : isTablet ? 24 : 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isDesktop) ...[
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      icon: Icon(
+                                        Icons.arrow_back,
+                                        size: isTablet ? 28 : 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Text(
+                                      'Change Password',
+                                      style: TextStyle(
+                                        fontSize: isTablet ? 28 : 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: isTablet ? 40 : 32),
+                              ],
+
+                              PasswordField(
+                                controller: currentCtrl,
+                                hint: 'Current Password',
+                                validator: _validatePassword,
+                              ),
+                              SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
+
+                              // New Password
+                              PasswordField(
+                                controller: newCtrl,
+                                hint: 'New Password',
+                                validator: _validatePassword,
+                              ),
+                              SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
+
+                              // Confirm New Password
+                              PasswordField(
+                                controller: confirmCtrl,
+                                hint: 'Confirm New Password',
+                                validator: (value) {
+                                  if (value != newCtrl.text) {
+                                    return 'Passwords do not match';
+                                  }
+                                  return _validatePassword(value);
+                                },
+                              ),
+                              SizedBox(height: isDesktop ? 32 : isTablet ? 28 : 24),
+
+                              // Change Password Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: isDesktop ? 60 : isTablet ? 56 : 48,
+                                child: ElevatedButton(
+                                  onPressed: provider.loading ? null : _handleChangePassword,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF007BFF),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        isDesktop ? 20 : isTablet ? 16 : 12,
+                                      ),
+                                    ),
+                                  ),
+                                  child: provider.loading
+                                      ? SizedBox(
+                                    width: isDesktop ? 28 : isTablet ? 24 : 20,
+                                    height: isDesktop ? 28 : isTablet ? 24 : 20,
+                                    child: const CircularProgressIndicator(color: Colors.white),
+                                  )
+                                      : Text(
+                                    'Change Password',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isDesktop ? 18 : isTablet ? 17 : 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Additional security note
+                              SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isDesktop ? 8 : 0,
+                                ),
+                                child: Text(
+                                  'Note: You will be automatically logged out for security purposes after changing your password.',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: isDesktop ? 14 : isTablet ? 13 : 12,
+                                    height: 1.4,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

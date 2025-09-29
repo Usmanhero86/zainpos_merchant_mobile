@@ -76,7 +76,7 @@ class TerminalCard extends StatelessWidget {
               text: TextSpan(
                 style: DefaultTextStyle.of(context).style,
                 children: [
-                  const TextSpan(
+                  TextSpan(
                     text: 'ID: ',
                     style: TextStyle(color: Colors.grey,
                         fontWeight: FontWeight.bold),

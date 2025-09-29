@@ -6,6 +6,17 @@ void showSearchFilterBottomSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) =>  SearchAndFilterScreen(),
+    builder: (_) {
+      return FractionallySizedBox(
+        heightFactor: 1.8 / 3,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: const SearchAndFilterScreen(),
+        ),
+      );
+    },
   );
 }

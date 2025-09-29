@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:zainpos_merchant_mobile/app/routes/app_routes.dart';
 import 'package:zainpos_merchant_mobile/screens/home/tabs/home_tab.dart';
 import 'package:zainpos_merchant_mobile/screens/home/tabs/terminal_tab.dart';
-import 'package:zainpos_merchant_mobile/screens/home/tabs/transaction_tab.dart';
-import 'package:zainpos_merchant_mobile/screens/home/widgets/build_more_tab_navigator.dart';
+import 'package:zainpos_merchant_mobile/screens/home/tabs/transaction_screen.dart';
 import 'package:zainpos_merchant_mobile/screens/home/widgets/build_option_button.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,20 +18,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     HomeTab(),
-    TransactionsTab(),
+    TransactionsScreen(),
     TerminalsTab(),
-    SizedBox.shrink(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_currentIndex == 3) {
-        showOptionsDialog();
-      }
-    });
-  }
 
   void showOptionsDialog() {
     final size = MediaQuery.of(context).size;
@@ -39,9 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final handleWidth = size.width * 0.1;
     final handleHeight = size.height * 0.005;
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
+    showModalBottomSheet(context: context, isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
@@ -65,14 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: size.height * 0.015),
 
-              // Buttons scale with width
               buildOptionButton(
                 icon: Image.asset('assets/logos/coins-swap-01.png',
                     height: size.width * 0.06, width: size.width * 0.06),
                 title: 'Disputes',
                 onPressed: () {
                   Navigator.pop(context);
-                  moreTabNavigatorKey.currentState!.pushNamed('/disputes');
+                  Navigator.pushNamed(context, AppRouter.disputes);
                 },
               ),
               SizedBox(height: size.height * 0.01),
@@ -82,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Loans',
                 onPressed: () {
                   Navigator.pop(context);
-                  moreTabNavigatorKey.currentState!.pushNamed('/loans');
+                  Navigator.pushNamed(context,AppRouter.loans);
                 },
               ),
               SizedBox(height: size.height * 0.01),
@@ -92,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Accounts',
                 onPressed: () {
                   Navigator.pop(context);
-                  moreTabNavigatorKey.currentState!.pushNamed('/accounts');
+                  Navigator.pushNamed(context,AppRouter.accounts);
                 },
               ),
               SizedBox(height: size.height * 0.02),
@@ -108,28 +94,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final size = MediaQuery.of(context).size;
     final screenWidth = size.width;
 
-    Widget getCurrentPage() {
-      if (_currentIndex == 3) {
-        return buildMoreTabNavigator(moreTabNavigatorKey);
-      }
-      return _pages[_currentIndex];
-    }
-
     return Scaffold(
-      body: getCurrentPage(),
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() => _currentIndex = index);
           if (index == 3) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              showOptionsDialog();
-            });
+            showOptionsDialog();
+          } else {
+            setState(() => _currentIndex = index);
           }
         },
         selectedItemColor: const Color(0xFF0052cc),
         unselectedItemColor: const Color(0xFF777777),
-        iconSize: screenWidth * 0.07, // scales with screen width
+        iconSize: screenWidth * 0.07,
         type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(

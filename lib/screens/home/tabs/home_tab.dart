@@ -1,24 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:zainpos_merchant_mobile/provider/home_provider.dart';
 import 'package:zainpos_merchant_mobile/screens/network/network_screen.dart';
 import 'package:zainpos_merchant_mobile/screens/notifications/notifications_screen.dart';
-import '../../../widgets/build_transaction_card.dart';
+import 'package:zainpos_merchant_mobile/widgets/build_transaction_card.dart';
+import '../../../services/models/response_model/home_response.dart';
+import '../widgets/home_content_widget.dart';
+import '../widgets/list_widget.dart';
+import '../widgets/placeholder_widget.dart';
+import '../widgets/today_widget.dart';
+import '../widgets/empty_state_widget.dart';
+import '../widgets/error_widget.dart';
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
   @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+      homeProvider.fetchHomeData();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final homeProvider = Provider.of<HomeProvider>(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final padding = screenWidth * 0.04;
     final titleFontSize = screenWidth * 0.05;
     final subtitleFontSize = screenWidth * 0.035;
 
-    final String currentDate =
-    DateFormat('EEEE, MMMM d, y').format(DateTime.now());
+    final String currentDate = DateFormat('EEEE, MMMM d, y').format(DateTime.now());
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,10 +76,10 @@ class HomeTab extends StatelessWidget {
             },
           ),
           IconButton(
-            icon:  Image(
+            icon: Image(
               height: 24, width: 24,
-          image: AssetImage('assets/logos/serviceIcon.png'),
-          ),
+              image: AssetImage('assets/logos/serviceIcon.png'),
+            ),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(
                   builder: (context)=> NetworkSelectionScreen()));
@@ -61,111 +87,29 @@ class HomeTab extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(padding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-             TextButton(
-               onPressed: (){},
-               style: TextButton.styleFrom(
-                 minimumSize: Size(250, 40),
-                   padding: EdgeInsets.symmetric(horizontal: 16),
-                   side: BorderSide(color: Colors.blue)
-               ),
-               child: Row(
-                 mainAxisSize: MainAxisSize.min,
-                 children: [
-                   Icon(Icons.mail,color: Colors.blue),
-                   SizedBox(width: padding - 11),
-                   Text(
-                    'Gidado Mustapha Enterprises',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w300,
-                      color: Colors.blue,
-                    ),
-                             ),
-                 ],
-               ),
-             ),
-
-            // Recent Transactions Title
-             Row(
-               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-               children: [
-                 Text(
-                  'Recent Transactions',
-                  style: TextStyle(fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  )
-                 ),
-                 TextButton(onPressed: (){},
-                     child: Text('20 Transactions', style: TextStyle(
-                       color: Colors.blue
-                     ),))
-               ],
-             ),
-             SizedBox(height: 16),
-
-            // Example Transactions
-            BuildTransactionCard(
-              status: 'SUCCESS',
-              reference: 'REF-266526555',
-              terminal: 'Nassarawa Terminal',
-              type: 'CARD',
-              date: '2024-02-16',
-              amount: '12,500.00',
-              balance: '1,900,070.00',
-            ),
-             Divider(thickness: 1),
-            SizedBox(height: 12),
-            BuildTransactionCard(
-              status: 'SUCCESS',
-              reference: 'REF-266526556',
-              amount: 'N2,500.00',
-              balance: 'N135,700.00',
-              terminal: 'Sharada Terminal-1',
-              type: 'TRANSFER',
-              date: '2024-02-16',
-            ),
-             Divider(thickness: 1),
-            SizedBox(height: 12),
-            BuildTransactionCard(
-              status: 'SUCCESS',
-              reference: 'REF-266526556',
-              amount: 'N2,500.00',
-              balance: 'N135,700.00',
-              terminal: 'Sharada Terminal-1',
-              type: 'TRANSFER',
-              date: '2024-02-16',
-            ),
-             Divider(thickness: 1),
-            SizedBox(height: 12),
-            BuildTransactionCard(
-              status: 'SUCCESS',
-              reference: 'REF-266526556',
-              amount: 'N2,500.00',
-              balance: 'N135,700.00',
-              terminal: 'Sharada Terminal-1',
-              type: 'TRANSFER',
-              date: '2024-02-16',
-            ),
-             Divider(thickness: 1),
-            SizedBox(height: 12),
-            BuildTransactionCard(
-              status: 'SUCCESS',
-              reference: 'REF-266526556',
-              amount: 'N2,500.00',
-              balance: 'N135,700.00',
-              terminal: 'Sharada Terminal-1',
-              type: 'TRANSFER',
-              date: '2024-02-16',
-            ),
-          ],
-        ),
-      ),
+      body: buildBody(homeProvider, screenWidth, screenHeight, padding),
     );
   }
+
+  Widget buildBody(HomeProvider homeProvider, double screenWidth, double screenHeight, double padding) {
+    if (homeProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (homeProvider.errorMessage.isNotEmpty) {
+      return errorState(homeProvider, screenWidth, padding);
+    }
+
+    if (homeProvider.homeData == null) {
+      return EmptyState();
+    }
+
+    return homeContent(homeProvider, screenWidth, screenHeight, padding);
+  }
+
+
+
+
+
+
 }

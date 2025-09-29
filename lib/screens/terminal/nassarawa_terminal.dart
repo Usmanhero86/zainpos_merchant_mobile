@@ -166,8 +166,8 @@ class NassarawaTerminalScreen extends StatelessWidget {
 
                           indicator: BoxDecoration(
                             color: Color(0xFFEFEFEF),
-                            border: Border.all(color: Colors.grey),      // keeps border line
-                            borderRadius: BorderRadius.circular(8),      // same radius as container
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           labelColor: Colors.black,
                           unselectedLabelColor: Colors.black54,
