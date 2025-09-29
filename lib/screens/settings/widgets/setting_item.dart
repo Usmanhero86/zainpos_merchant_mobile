@@ -29,6 +29,7 @@ class SettingItem extends StatelessWidget {
     final h = size.height;
 
     return Container(
+      height: h * 0.13,
       padding: EdgeInsets.all(w * 0.04),
       decoration: BoxDecoration(
         color: backgroundColor ?? Colors.white,
@@ -50,7 +51,7 @@ class SettingItem extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: w * 0.045,
+                    fontSize: w * 0.050,
                     fontWeight: FontWeight.bold,
                     color: titleColor ?? Colors.black,
                   ),
@@ -59,7 +60,7 @@ class SettingItem extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: w * 0.04,
+                    fontSize: w * 0.050,
                     color: descriptionColor ?? Colors.grey,
                   ),
                 ),
@@ -68,7 +69,7 @@ class SettingItem extends StatelessWidget {
           ),
           SizedBox(width: w * 0.04),
           Transform.scale(
-            scale: w * 0.0025 + 0.2,
+            scale: w * 0.003 + 0.04,
             child: Switch(
               value: value,
               onChanged: onChanged,

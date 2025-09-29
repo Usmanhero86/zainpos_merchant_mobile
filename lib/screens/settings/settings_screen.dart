@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:zainpos_merchant_mobile/screens/settings/widgets/settings_content.dart';
-import 'widgets/setting_item.dart';
 
 class SettingsScreen extends StatelessWidget {
   final bool initialTransfersEnabled;
@@ -23,8 +22,7 @@ class SettingsScreen extends StatelessWidget {
     final w = size.width;
 
     return Container(
-      // 70% of screen height
-      height: h * 0.7,
+      height: h * 0.4,
       padding: EdgeInsets.all(w * 0.04),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -39,13 +37,13 @@ class SettingsScreen extends StatelessWidget {
           // Drag handle
           Container(
             width: w * 0.1,
-            height: h * 0.006,
+            height: h * 0.002,
             decoration: BoxDecoration(
               color: Colors.grey.shade300,
               borderRadius: BorderRadius.circular(h * 0.003),
             ),
           ),
-          SizedBox(height: h * 0.012),
+          SizedBox(height: h * 0.003),
           Expanded(
             child: SettingsContent(
               initialTransfersEnabled: initialTransfersEnabled,

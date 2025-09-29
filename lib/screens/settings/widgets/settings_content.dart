@@ -43,7 +43,7 @@ class _SettingsContentState extends State<SettingsContent> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Settings applied: $settings'),
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
     Navigator.pop(context);
@@ -66,7 +66,7 @@ class _SettingsContentState extends State<SettingsContent> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: h * 0.012),
+          SizedBox(height: h * 0.002),
 
           SettingItem(
             title: 'Transfers',
@@ -74,7 +74,7 @@ class _SettingsContentState extends State<SettingsContent> {
             value: _transfersEnabled,
             onChanged: (v) => setState(() => _transfersEnabled = v),
           ),
-          SizedBox(height: h * 0.012),
+          SizedBox(height: h * 0.002),
 
           SettingItem(
             title: 'Balance',
@@ -82,7 +82,7 @@ class _SettingsContentState extends State<SettingsContent> {
             value: _balanceEnabled,
             onChanged: (v) => setState(() => _balanceEnabled = v),
           ),
-          SizedBox(height: h * 0.012),
+          SizedBox(height: h * 0.002),
 
           SettingItem(
             title: 'Reprint',
@@ -91,9 +91,9 @@ class _SettingsContentState extends State<SettingsContent> {
             onChanged: (v) => setState(() => _reprintEnabled = v),
           ),
 
-          SizedBox(height: h * 0.02),
-          const Divider(),
-          SizedBox(height: h * 0.02),
+          SizedBox(height: h * 0.002),
+           Divider(),
+          SizedBox(height: h * 0.002),
 
           SizedBox(
             width: double.infinity,
@@ -110,7 +110,7 @@ class _SettingsContentState extends State<SettingsContent> {
               child: Text(
                 'Apply',
                 style: TextStyle(
-                  fontSize: w * 0.045,
+                  fontSize: w * 0.02,
                   fontWeight: FontWeight.bold,
                 ),
               ),

@@ -1,129 +1,88 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../bank_transfer.dart';
+import 'package:zainpos_merchant_mobile/services/models/response_model/bank_list_model.dart';
 
 class BankListItem extends StatelessWidget {
   final Bank bank;
+  final int successRate;
   final double ringSize;
   final double fontSize;
   final double spacing;
+  final VoidCallback? onTap;
 
   const BankListItem({
     super.key,
     required this.bank,
+    required this.successRate,
     required this.ringSize,
     required this.fontSize,
     required this.spacing,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      margin: EdgeInsets.only(bottom: spacing),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+    return InkWell(
+      onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: spacing),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           children: [
-            _PartialRingIndicator(
-              percentage: bank.successRate,
-              size: ringSize,
-            ),
+            _buildSuccessRing(),
             SizedBox(width: spacing),
-            Flexible(
-              child: Text(
-                bank.name,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+            Expanded(child: _buildBankName()),
+            Icon(Icons.chevron_right,
+                color: Colors.grey.shade400,
+                size: fontSize * 1.2),
           ],
         ),
       ),
     );
   }
-}
 
-class _PartialRingIndicator extends StatelessWidget {
-  final int percentage;
-  final double size;
+  Widget _buildSuccessRing() {
+    final color = _getSuccessColor(successRate);
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: ringSize,
+          height: ringSize,
+          child: CircularProgressIndicator(
+            value: successRate / 100,
+            strokeWidth: 3,
+            backgroundColor: Colors.grey.shade200,
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        Text(
+          '$successRate%',
+          style: TextStyle(
+            fontSize: fontSize * 0.7,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
 
-  const _PartialRingIndicator({
-    required this.percentage,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: size * 0.8,
-            height: size * 0.8,
-            decoration: BoxDecoration(
-              color: Colors.green.shade100,
-              shape: BoxShape.circle,
-            ),
-          ),
-          CustomPaint(
-            size: Size(size, size),
-            painter: _PartialRingPainter(percentage),
-          ),
-          Text(
-            '$percentage%',
-            style: TextStyle(
-              fontSize: size * 0.25,
-              fontWeight: FontWeight.bold,
-              color: Colors.green.shade800,
-            ),
-          ),
-        ],
+  Widget _buildBankName() {
+    return Text(
+      bank.name,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w500,
+        color: Colors.grey.shade800,
       ),
     );
   }
-}
 
-class _PartialRingPainter extends CustomPainter {
-  final int percentage;
-  const _PartialRingPainter(this.percentage);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 2;
-    const strokeWidth = 3.0;
-
-    final backgroundPaint = Paint()
-      ..color = Colors.green.shade100
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, backgroundPaint);
-
-    final filledPaint = Paint()
-      ..color = Colors.green.shade600
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final filledAngle = 2 * math.pi * (percentage / 100);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      filledAngle,
-      false,
-      filledPaint,
-    );
+  Color _getSuccessColor(int rate) {
+    if (rate >= 90) return Colors.green;
+    if (rate >= 80) return Colors.blue;
+    if (rate >= 70) return Colors.orange;
+    return Colors.red;
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

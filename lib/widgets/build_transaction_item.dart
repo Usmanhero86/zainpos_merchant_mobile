@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:zainpos_merchant_mobile/app/models/transaction_model.dart';
 import 'package:zainpos_merchant_mobile/screens/transactions/failed_transaction_screen.dart';
+import '../app/models/transaction_model.dart';
 import '../screens/transactions/success_transactions_screen.dart';
 
 class BuildTransactionItem extends StatelessWidget {

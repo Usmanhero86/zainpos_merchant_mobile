@@ -50,7 +50,7 @@ class LoanDetailsScreen extends StatelessWidget {
             SizedBox(height: verticalSpacing * 1.2),
 
             // Loan Amount Card
-            LoanAmountCard(),
+            LoanAmountCard(amount: '', label: '',),
             SizedBox(height: verticalSpacing * 1.2),
 
             // Details Section

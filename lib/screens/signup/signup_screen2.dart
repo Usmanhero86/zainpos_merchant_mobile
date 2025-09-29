@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zainpos_merchant_mobile/app/contants/u_strings.dart';
-import 'package:zainpos_merchant_mobile/screens/auth/login_screen.dart';
+import 'package:zainpos_merchant_mobile/screens/login/login_screen.dart';
 import '../../app/routes/app_routes.dart';
 import '../../widgets/build_form.dart';
 import '../../widgets/c_button.dart';

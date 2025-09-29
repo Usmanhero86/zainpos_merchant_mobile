@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class LoanAmountCard extends StatelessWidget {
-  final String? amount;
-  final String? label;
+  final String amount;
+  final String label;
   final Color? amountColor;
   final Color? labelColor;
   final Color? cardColor;
@@ -10,8 +10,8 @@ class LoanAmountCard extends StatelessWidget {
 
   const LoanAmountCard({
     super.key,
-    this.amount,
-     this.label,
+    required this.amount,
+     required this.label,
     this.amountColor,
     this.labelColor,
     this.cardColor,
@@ -31,7 +31,7 @@ class LoanAmountCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            amount!,
+            amount,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -40,7 +40,7 @@ class LoanAmountCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            label!,
+            label,
             style: TextStyle(
               fontSize: 16,
               color: labelColor ?? Colors.blue.shade700,

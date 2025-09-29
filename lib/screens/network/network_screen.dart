@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../banks/bank_transfer.dart';
+import 'package:zainpos_merchant_mobile/screens/network/widgets/network_option.dart';
+import '../banks/bank_selection_screen.dart';
 import '../banks/card_screen.dart';
 
 class NetworkSelectionScreen extends StatelessWidget {
@@ -39,14 +40,16 @@ class NetworkSelectionScreen extends StatelessWidget {
               color: Colors.white,
               child: Column(
                 children: [
-                  buildNetworkOption(
+                  networkOption(
                     icon: Image(image: AssetImage('assets/logos/bank.png'),
                     height: 24, width: 24,),
                     title: 'Bank Transfer',
                     description: 'Transfer funds directly from your bank account',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => BankSelectionScreen()));
+                          builder: (context) => BankSelectionScreen(),
+                      )
+                      );
                     },
                   ),
                   Padding(
@@ -54,7 +57,7 @@ class NetworkSelectionScreen extends StatelessWidget {
                     child: Divider(),
                   ),
                   // Card Payment Option
-                  buildNetworkOption(
+                  networkOption(
                     icon: Image(image: AssetImage('assets/logos/credit-card-01.png'),
                     height: 24, width: 24,),
                     title: 'Card Payment',
@@ -73,56 +76,7 @@ class NetworkSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget buildNetworkOption({
-    required Widget icon,
-    required String title,
-    required String description,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      children: [
-        GestureDetector(
-          onTap: onTap,
-          child: Padding(
-            padding:  EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                icon,
-                 SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style:  TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                       SizedBox(height: 4),
-                      Text(
-                        description,
-                        style:  TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                 Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+
 }
 
 

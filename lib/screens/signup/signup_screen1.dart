@@ -4,7 +4,7 @@ import '../../app/routes/app_routes.dart';
 import '../../widgets/build_form.dart';
 import '../../widgets/cbn_license_row.dart';
 import '../../widgets/signup_header.dart';
-import 'login_screen.dart';
+import '../login/login_screen.dart';
 import 'signup_screen2.dart';
 
 class SignupScreen1 extends StatefulWidget {
