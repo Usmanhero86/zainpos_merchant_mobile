@@ -10,7 +10,7 @@ class SearchAndFilterScreen extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      height: screenHeight * 0.66, // Slightly taller to accommodate more content
+      height: screenHeight * 0.60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
@@ -31,7 +31,6 @@ class SearchAndFilterScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          SizedBox(height: 10),
 
           // Search & Filter content
            Expanded(

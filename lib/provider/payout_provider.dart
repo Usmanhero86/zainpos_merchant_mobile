@@ -4,33 +4,49 @@ import '../services/models/response_model/payout_response_model.dart';
 
 class PayoutProvider with ChangeNotifier {
   final ApiService _api = ApiService();
-  bool isLoading = false;
-  String? error;
+  bool _isLoading = false;
+  String? _error;
+  PayoutResponseModel? _payoutResponse;
 
-  /// Cached data
-  PayoutResponseModel? payoutResponse;
+  // Getters
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  PayoutResponseModel? get payoutResponse => _payoutResponse;
+
+  // Get payout count for the chip
+  int get payoutCount => _payoutResponse?.data?.length ?? 0;
 
   /// Load payouts. If [forceRefresh] is true we always fetch;
   /// otherwise we only fetch if no cache exists.
   Future<void> loadPayoutHistory({bool forceRefresh = false}) async {
     // If we already have data and not forcing, show it immediately
-    if (payoutResponse != null && !forceRefresh) return;
+    if (_payoutResponse != null && !forceRefresh) return;
 
-    isLoading = true;
+    _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       final response = await _api.fetchPayoutHistory();
-      payoutResponse = response;
-      error = null;
+      _payoutResponse = response;
+      _error = null;
     } catch (e) {
-      error = e.toString();
+      _error = e.toString();
+      if (kDebugMode) {
+        print('Payout fetch error: $e');
+      }
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   /// Refresh button or pull-to-refresh always calls this
   Future<void> refresh() => loadPayoutHistory(forceRefresh: true);
+
+  /// Clear error
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 }

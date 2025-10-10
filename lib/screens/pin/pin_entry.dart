@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:zainpos_merchant_mobile/screens/home/home_screen.dart';
-import 'package:zainpos_merchant_mobile/screens/pin/widget/build_transfer_summary.dart';
-import 'package:zainpos_merchant_mobile/screens/pin/widget/complete_message.dart';
+import 'package:zainpos_merchant_mobile/screens/pin/change_pin_screen.dart';
+import 'package:zainpos_merchant_mobile/services/api/api_service.dart';
 import 'package:zainpos_merchant_mobile/widgets/transfer_success_widget.dart';
+import '../../provider/pin_provider.dart';
+import '../../services/models/response_model/transfer_response_model.dart';
 import 'widget/back_space.dart';
 import 'widget/number_button.dart';
 
@@ -20,6 +23,10 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   bool _isProcessing = false;
   bool _showError = false;
   bool _transferCompleted = false;
+  TransferResponse? _transferResponse;
+
+  // Mock PIN configuration
+  final bool _useMockPin = false;
 
   void onNumberPressed(String number) {
     if (_isProcessing || _transferCompleted) return;
@@ -56,16 +63,16 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       _showError = false;
     });
 
-    // Simulate PIN validation API call
-    await Future.delayed( Duration(seconds: 2));
+    try {
+      final pinProvider = Provider.of<PinProvider>(context, listen: false);
 
-    if (mounted && !_transferCompleted) {
-      // Mock validation - in real app, this would call your API
-      final isValidPin = _enteredPin == '1234'; // Default test PIN
-
-      if (isValidPin) {
-        await processTransfer();
+      if (pinProvider.useMockPin) {
+        await processMockTransfer(pinProvider);
       } else {
+        await processRealTransfer();
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           _showError = true;
           _isProcessing = false;
@@ -73,27 +80,249 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
-            content: Text('Invalid PIN. Please try again.'),
+          SnackBar(
+            content: Text('PIN validation failed: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     }
   }
 
-  Future<void> processTransfer() async {
-    // Simulate transfer processing
-    await Future.delayed( Duration(seconds: 1));
+  Future<void> processMockTransfer(PinProvider pinProvider) async {
+    // Simulate API delay
+    await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) {
+    if (!mounted) return;
+
+    // Use dynamic mock PIN from provider
+    if (pinProvider.validateMockPin(_enteredPin)) {
+      // Successful transfer
       setState(() {
         _transferCompleted = true;
         _isProcessing = false;
       });
 
+      // Create mock successful response
+      _transferResponse = TransferResponse(
+        isSuccess: true,
+        message: 'Transfer successful (Mock)',
+        reference: generateTransactionReference(),
+        error: false,
+      );
+
       showTransferSuccessScreen();
+    } else {
+      // Failed transfer - wrong PIN
+      setState(() {
+        _showError = true;
+        _isProcessing = false;
+        _enteredPin = '';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid PIN. Please try again.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> processRealTransfer() async {
+    try {
+      setState(() {
+        _isProcessing = true;
+      });
+
+      // Get the transfer data
+      final bank = widget.transferData['bank'];
+      final accountNumber = widget.transferData['accountNumber'] ?? '';
+      final accountName = widget.transferData['accountName'] ?? '';
+      final amount = widget.transferData['amount'] ?? '0';
+      final narration = widget.transferData['narration'] ?? '';
+
+      debugPrint('=== REAL TRANSFER INITIATION ===');
+      debugPrint('Destination: $accountNumber ($accountName)');
+      debugPrint('Bank: ${bank.name} (${bank.code})');
+      debugPrint('Amount: $amount');
+      debugPrint('Narration: $narration');
+
+      // Call the real API with the entered PIN
+      final response = await ApiService().initiateFundTransfer(
+        destinationAccountNumber: accountNumber,
+        destinationAccountName: accountName,
+        destinationBankCode: bank.code,
+        destinationBankName: bank.name,
+        amount: amount,
+        sourceAccountNumber: '4423190554', // TODO: Make this dynamic
+        zainboxCode: '34447_hAkmg9YimuL28OgTdtEr', // TODO: Make this dynamic
+        narration: narration,
+        terminalId: '2070GPQ21', // TODO: Make this dynamic
+        pin: _enteredPin,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _transferResponse = response;
+        _transferCompleted = true;
+        _isProcessing = false;
+      });
+
+      if (response.isSuccess && response.Success) {
+        debugPrint('=== TRANSFER SUCCESSFUL ===');
+        debugPrint('Reference: ${response.reference}');
+        debugPrint('Message: ${response.message}');
+
+        showTransferSuccessScreen();
+      } else {
+        // Handle specific error types
+        debugPrint('=== TRANSFER FAILED ===');
+        debugPrint('Error Type: ${response.errorType}');
+        debugPrint('Message: ${response.message}');
+        debugPrint('Code: ${response.code}');
+
+        if (response.isInvalidPin) {
+          // Specific handling for invalid PIN
+          setState(() {
+            _showError = true;
+            _isProcessing = false;
+            _enteredPin = ''; // Clear PIN for security
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid PIN. Please try again.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else if (response.isInsufficientFunds) {
+          // Handle insufficient funds
+          setState(() {
+            _isProcessing = false;
+            _enteredPin = '';
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.displayMessage),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        } else {
+          // General error handling
+          setState(() {
+            _isProcessing = false;
+            _enteredPin = '';
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.displayMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+
+    } catch (e) {
+      if (!mounted) return;
+
+      debugPrint('=== TRANSFER ERROR ===');
+      debugPrint('Exception: $e');
+
+      setState(() {
+        _isProcessing = false;
+        _showError = true;
+        _enteredPin = '';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transfer failed: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  Future<void> processTransfer() async {
+    try {
+      setState(() {
+        _isProcessing = true;
+      });
+
+      // Get the transfer data
+      final bank = widget.transferData['bank'];
+      final accountNumber = widget.transferData['accountNumber'] ?? '';
+      final accountName = widget.transferData['accountName'] ?? '';
+      final amount = widget.transferData['amount'] ?? '0';
+      final narration = widget.transferData['narration'] ?? '';
+
+      // Call the real API
+      final response = await ApiService().initiateFundTransfer(
+        destinationAccountNumber: accountNumber,
+        destinationAccountName: accountName,
+        destinationBankCode: bank.code,
+        destinationBankName: bank.name,
+        amount: amount,
+        sourceAccountNumber: '4423190554', // You need to get this from your app state
+        zainboxCode: '34447_hAkmg9YimuL28OgTdtEr', // You need to get this from your app state
+        narration: narration,
+        terminalId: '2070GPQ21', // You need to get this from your terminal selection
+        pin: _enteredPin,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _transferResponse = response;
+        _transferCompleted = true;
+        _isProcessing = false;
+      });
+
+      if (response.Success) {
+        showTransferSuccessScreen();
+      } else {
+        // Show error from API response
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.displayMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+
+        // Reset PIN for security
+        setState(() {
+          _enteredPin = '';
+          _isProcessing = false;
+        });
+      }
+
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isProcessing = false;
+        _showError = true;
+        _enteredPin = '';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transfer failed: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 
@@ -108,25 +337,19 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
           recipient: widget.transferData['accountName'] ?? 'Recipient',
           bankName: widget.transferData['bank']?.name ?? 'Bank',
           accountNumber: widget.transferData['accountNumber'] ?? '',
-          transactionReference: generateTransactionReference(),
+          transactionReference: _transferResponse?.reference ?? generateTransactionReference(),
           narration: widget.transferData['narration'] ?? '',
           transactionDate: DateTime.now(),
           onClose: () {
-            Navigator.pop(context);
+            Navigator.pop(context); // Close success screen
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) =>  HomeScreen()),
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
                   (route) => false,
             );
           },
-          onShareReceipt: () {
-            shareReceipt();
-          },
-          onViewTransaction: () {
-            viewTransactionDetails();
-          },
           title: 'Transfer Successful',
-          subTitle: 'Your transfer has been completed successfully',
+          subTitle: 'You have successfully sent \n${widget.transferData['amount']} to ${widget.transferData['accountName']}',
           showTransactionDetails: true,
           showActionButtons: true,
         );
@@ -140,15 +363,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       _isProcessing = false;
       _showError = false;
       _transferCompleted = false;
+      _transferResponse = null;
     });
-  }
-
-  void shareReceipt() {
-    print('Sharing receipt...');
-  }
-
-  void viewTransactionDetails() {
-    print('Viewing transaction details...');
   }
 
   String generateTransactionReference() {
@@ -171,10 +387,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
     final double w = size.width;
     final double h = size.height;
 
-    final double headingFont = w * 0.06;
-    final double subFont = w * 0.04;
-    final double dotSize = w * 0.05;
-    final double dotSpacing = w * 0.03;
+    final double dotSize = w * 0.12;
+    final double dotSpacing = w * 0.02;
     final double keypadSpacing = h * 0.025;
 
     return Scaffold(
@@ -186,78 +400,72 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
           icon: Icon(Icons.arrow_back, color: Colors.black, size: w * 0.07),
           onPressed: (_isProcessing || _transferCompleted) ? null : () => Navigator.pop(context),
         ),
-        title: Text(
-          _transferCompleted ? 'Transfer Complete' : 'Confirm Transfer',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: w * 0.05,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: _transferCompleted ? [
-          IconButton(
-            icon: Icon(Icons.refresh, color: Colors.blue),
-            onPressed: resetScreen,
-            tooltip: 'New Transfer',
-          ),
-        ] : null,
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: w * 0.08),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Transfer Summary Card
-                if (!_transferCompleted)TransferSummary(width: w, height: h, transferData:widget.transferData,),
-                if (_transferCompleted) CompletionMessage(width: w, height: h, transferData: widget.transferData,),
-
-                SizedBox(height: h * 0.04),
-
                 if (!_transferCompleted) ...[
                   Text(
-                    'Enter your PIN',
+                    _useMockPin ? 'Enter Mock PIN' : 'Enter your PIN',
                     style: TextStyle(
-                      fontSize: headingFont,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),                  SizedBox(height: h * 0.01),
+                  Text(
+                    'Enter your PIN to complete this transaction',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey,
                     ),
                   ),
-                  SizedBox(height: h * 0.01),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                    child: Text(
-                      'Enter your 4-digit PIN to authorize this transfer',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: subFont,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
+                  if (_useMockPin) ...[
+                    SizedBox(height: h * 0.01),
+                  ],
                 ],
 
                 SizedBox(height: h * 0.05),
 
-                // PIN dots with error state
+                // PIN dots
                 if (!_transferCompleted) ...[
                   Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(4, (index) {
-                          return Container(
-                            margin: EdgeInsets.symmetric(horizontal: dotSpacing),
-                            width: dotSize,
-                            height: dotSize,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: index < _enteredPin.length
-                                  ? (_showError ? Colors.red : Colors.blue)
-                                  : Colors.grey[300],
-                            ),
-                          );
-                        }),
+                      Container(
+                        height: 50,
+                        padding: EdgeInsets.all(w * 0.02),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _showError ? Colors.red : Colors.grey[300]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (index) {
+                            return Container(
+                              margin: EdgeInsets.symmetric(horizontal: dotSpacing),
+                              decoration: BoxDecoration(
+                                color: index < _enteredPin.length
+                                    ? (_showError ? Colors.red : Colors.white70)
+                                    : Colors.grey[100],
+                              ),
+                              child: index < _enteredPin.length
+                                  ? Icon(
+                                Icons.star,
+                                size: dotSize * 0.4,
+                                color: Colors.black,
+                              )
+                                  : null,
+                            );
+                          }),
+                        ),
                       ),
                       SizedBox(height: h * 0.01),
                       if (_showError)
@@ -280,14 +488,14 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                       SizedBox(
                         width: w * 0.08,
                         height: w * 0.08,
-                        child: CircularProgressIndicator(
+                        child: const CircularProgressIndicator(
                           strokeWidth: 3,
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                         ),
                       ),
                       SizedBox(height: h * 0.02),
                       Text(
-                        'Processing Transfer...',
+                        _useMockPin ? 'Processing Mock Transfer...' : 'Processing Transfer...',
                         style: TextStyle(
                           fontSize: w * 0.04,
                           color: Colors.grey,
@@ -298,36 +506,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                   ),
                 ],
 
-                // Completion message
-                if (_transferCompleted) ...[
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: w * 0.15,
-                  ),
-                  SizedBox(height: h * 0.02),
-                  Text(
-                    'Transfer Completed',
-                    style: TextStyle(
-                      fontSize: w * 0.05,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                  SizedBox(height: h * 0.01),
-                  Text(
-                    'You can close this screen or start a new transfer',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: w * 0.04,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  SizedBox(height: h * 0.04),
-                ],
-
-                // Numeric keypad
-                if (!_transferCompleted) ...[
+                if (!_transferCompleted ) ...[
                   Opacity(
                     opacity: _isProcessing ? 0.5 : 1.0,
                     child: AbsorbPointer(
@@ -337,63 +516,27 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              NumberButton(
-                                  number: '1',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              NumberButton(
-                                  number: '2',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              NumberButton(
-                                  number: '3',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
+                              NumberButton(number: '1', onPressed: onNumberPressed, size: w * 0.18),
+                              NumberButton(number: '2', onPressed: onNumberPressed, size: w * 0.18),
+                              NumberButton(number: '3', onPressed: onNumberPressed, size: w * 0.18),
                             ],
                           ),
                           SizedBox(height: keypadSpacing),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              NumberButton(
-                                  number: '4',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              NumberButton(
-                                  number: '5',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              NumberButton(
-                                  number: '6',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
+                              NumberButton(number: '4', onPressed: onNumberPressed, size: w * 0.18),
+                              NumberButton(number: '5', onPressed: onNumberPressed, size: w * 0.18),
+                              NumberButton(number: '6', onPressed: onNumberPressed, size: w * 0.18),
                             ],
                           ),
                           SizedBox(height: keypadSpacing),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              NumberButton(
-                                  number: '7',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              NumberButton(
-                                  number: '8',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              NumberButton(
-                                  number: '9',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
+                              NumberButton(number: '7', onPressed: onNumberPressed, size: w * 0.18),
+                              NumberButton(number: '8', onPressed: onNumberPressed, size: w * 0.18),
+                              NumberButton(number: '9', onPressed: onNumberPressed, size: w * 0.18),
                             ],
                           ),
                           SizedBox(height: keypadSpacing),
@@ -411,65 +554,70 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                                     color: Colors.grey,
                                   ),
                                 ),
-                              ),
-                              NumberButton(
-                                  number: '0',
-                                  onPressed: onNumberPressed,
-                                  size: w * 0.18
-                              ),
-                              BackspaceButton(
-                                onPressed: onBackspacePressed,
-                                size: w * 0.18,
-                              ),
-                            ],
+                              ),                              NumberButton(number: '0', onPressed: onNumberPressed, size: w * 0.18),
+                              BackspaceButton(onPressed: onBackspacePressed, size: w * 0.18),                            ],
                           ),
                         ],
                       ),
                     ),
                   ),
-                ],
-
-                // Forgot PIN option
-                if (!_transferCompleted) ...[
-                  SizedBox(height: h * 0.04),
-                  TextButton(
-                    onPressed: _isProcessing ? null : () {
-                      showForgotPinDialog();
-                    },
-                    child: Text(
-                      'Forgot PIN?',
-                      style: TextStyle(
-                        fontSize: w * 0.04,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                ],
-
-                // New transfer button
-                if (_transferCompleted) ...[
-                  SizedBox(height: h * 0.02),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: resetScreen,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: EdgeInsets.symmetric(vertical: h * 0.02),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
+                  // Forgot PIN option
+                  if (!_transferCompleted ) ...[
+                    SizedBox(height: h * 0.04),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(
+                            builder: (context)=> ChangePinScreen()));
+                      },
                       child: Text(
-                        'New Transfer',
+                        'Forgot PIN?',
                         style: TextStyle(
                           fontSize: w * 0.04,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
                         ),
                       ),
                     ),
-                  ),
+                  ],
+
+                  // Retry button for failed transfers
+                  if (_transferResponse?.hasError == true) ...[
+                    SizedBox(height: h * 0.02),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: resetScreen,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          padding: EdgeInsets.symmetric(vertical: h * 0.02),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Try Again',
+                          style: TextStyle(
+                            fontSize: w * 0.04,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: h * 0.01),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: w * 0.04,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]
                 ],
               ],
             ),
@@ -478,89 +626,4 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       ),
     );
   }
-  void showForgotPinDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // user must tap a button
-      builder: (context) {
-        final w = MediaQuery.of(context).size.width;
-
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(w * 0.06),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // top icon
-                CircleAvatar(
-                  radius: w * 0.12,
-                  backgroundColor: Colors.orange.withOpacity(0.1),
-                  child: Icon(
-                    Icons.lock_reset_rounded,
-                    size: w * 0.15,
-                    color: Colors.orange,
-                  ),
-                ),
-                 SizedBox(height: 20),
-                 Text(
-                  'Forgot Transaction PIN?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                 SizedBox(height: 12),
-                 Text(
-                  'No worries! Please contact our support team to reset your transaction PIN.',
-                  style: TextStyle(fontSize: 15, color: Colors.black54),
-                  textAlign: TextAlign.center,
-                ),
-                 SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Cancel button
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey[700],
-                        padding:
-                         EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child:  Text('Cancel'),
-                    ),
-                    // Contact Support button
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding:
-                         EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child:  Text(
-                        'Contact Support',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-
 }

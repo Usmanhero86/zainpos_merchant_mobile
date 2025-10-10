@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:zainpos_merchant_mobile/app/contants/u_strings.dart';
 import 'package:zainpos_merchant_mobile/screens/login/login_screen.dart';
-import '../../app/routes/app_routes.dart';
 import '../../widgets/build_form.dart';
 import '../../widgets/c_button.dart';
 import '../../widgets/cbn_license_row.dart';
 import '../../widgets/signup_header.dart';
-import 'signup_screen3.dart';
 
 class SecondSignupScreen extends StatefulWidget {
   const SecondSignupScreen({super.key});
@@ -21,6 +18,7 @@ class _SecondSignupScreenState extends State<SecondSignupScreen> {
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+
 
   String? _selectedId;
   final List<String> _id = ['National ID', 'Drivers License','Voters Card', 'Passport'];
@@ -54,20 +52,20 @@ class _SecondSignupScreenState extends State<SecondSignupScreen> {
                         hintText: 'Enter first name',
                         controller: _firstNameController,
                       ),
-                      SizedBox(height: screenHeight * 0.02),
+                      SizedBox(height: screenHeight * 0.001),
 
                       CustomFormField(
                         hintText: 'Enter Last Name',
                         controller: _lastNameController,
                       ),
-                      SizedBox(height: screenHeight * 0.02),
+                      SizedBox(height: screenHeight * 0.001),
 
                       CustomFormField(
                         hintText: 'Enter Phone Number',
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                       ),
-                      SizedBox(height: screenHeight * 0.02),
+                      SizedBox(height: screenHeight * 0.001),
 
                       CustomFormField(
                         hintText: 'Bvn',
@@ -84,7 +82,7 @@ class _SecondSignupScreenState extends State<SecondSignupScreen> {
                         //   return null;
                         // },
                       ),
-                      SizedBox(height: screenHeight * 0.02),
+                      SizedBox(height: screenHeight * 0.001),
 
                       CustomFormField(
                         hintText: 'Enter Email Address',
@@ -102,7 +100,7 @@ class _SecondSignupScreenState extends State<SecondSignupScreen> {
                         // },
                       ),
 
-                      SizedBox(height: screenHeight * 0.02),
+                      SizedBox(height: screenHeight * 0.001),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: DropdownButtonFormField<String>(
@@ -132,27 +130,60 @@ class _SecondSignupScreenState extends State<SecondSignupScreen> {
                           // value == null ? 'Please select your gender' : null,
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.02),
-
-                      CButton(
-                          text: 'Submit',
-                          onPressed: (){
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>  LoginScreen()),
-                            );
-                          }),
-                      SizedBox(height: screenHeight * 0.03),
-                      
-                      Text('By continuing, you agree to the $terms and \n $policy')
+                      SizedBox(height: screenHeight * 0.001),
+                      // SizedBox(height: screenHeight * 0.03),
 
                     ],
                   ),
                 ),
+              RichText(
+                text: TextSpan(
+                    children:  [
+                      TextSpan(
+                          text: 'By continuing, you agree to the',style: TextStyle(
+                          color: Colors.black
+                      )
+                      ),
+                      TextSpan(
+                          text: ' Terms of use' ,
+                          style: TextStyle(
+                              decoration: TextDecoration.underline,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              textBaseline: TextBaseline.ideographic
+                          )
+                      ),
+                      TextSpan(
+                          text: ' and \n',style: TextStyle(
+                          color: Colors.black
+                      )
+                      ),
+                      TextSpan(
+                          text:'privacy policy',style: TextStyle(
+                          decoration: TextDecoration.underline,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14
+                      )
+                      )
+                    ]
+                ),
 
+              ),
+              SizedBox(height: screenHeight * 0.01),
 
-              SizedBox(height: screenHeight * 0.03),
+              CButton(
+                  text: 'Submit',
+                  onPressed: (){
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>  LoginScreen()),
+                    );
+                  }),
+
+              SizedBox(height: screenHeight * 0.05),
 
               CbnLicenseRow(),
             ],

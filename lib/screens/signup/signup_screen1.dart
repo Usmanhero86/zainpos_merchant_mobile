@@ -124,13 +124,15 @@ class _SignupScreen1State extends State<SignupScreen1> {
                           text: 'Already have an account? ',
                           style: TextStyle(
                             color: Colors.grey,
-                            fontSize: 15,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400
                           ),
                           children: [
                             TextSpan(
                               text: 'Sign in',
                               style: TextStyle(
                                 color: Colors.black,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -142,7 +144,7 @@ class _SignupScreen1State extends State<SignupScreen1> {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.03),
+              SizedBox(height: screenHeight * 0.15),
 
               CbnLicenseRow(),
             ],

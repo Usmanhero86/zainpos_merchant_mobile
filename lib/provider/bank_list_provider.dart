@@ -87,4 +87,5 @@ class BankListProvider with ChangeNotifier {
     _searchQuery = '';
     fetchBankList();
   }
+
 }

@@ -30,9 +30,6 @@ class BankListItem extends StatelessWidget {
             _buildSuccessRing(),
             SizedBox(width: spacing),
             Expanded(child: _buildBankName()),
-            Icon(Icons.chevron_right,
-                color: Colors.grey.shade400,
-                size: fontSize * 1.2),
           ],
         ),
       ),
@@ -45,8 +42,8 @@ class BankListItem extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         SizedBox(
-          width: ringSize,
-          height: ringSize,
+          width: 38,
+          height: 38,
           child: CircularProgressIndicator(
             value: successRate / 100,
             strokeWidth: 3,
@@ -57,8 +54,8 @@ class BankListItem extends StatelessWidget {
         Text(
           '$successRate%',
           style: TextStyle(
-            fontSize: fontSize * 0.7,
-            fontWeight: FontWeight.bold,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
             color: color,
           ),
         ),
@@ -72,7 +69,7 @@ class BankListItem extends StatelessWidget {
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: fontSize,
+        fontSize: 14,
         fontWeight: FontWeight.w500,
         color: Colors.grey.shade800,
       ),

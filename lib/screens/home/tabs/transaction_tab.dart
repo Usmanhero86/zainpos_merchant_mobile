@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:zainpos_merchant_mobile/screens/home/tabs/terminal_tab.dart';
-import 'package:zainpos_merchant_mobile/screens/terminal/nassarawa_terminal.dart';
 import '../../../app/models/transaction_model.dart';
 import '../../../widgets/build_transaction_item.dart';
 

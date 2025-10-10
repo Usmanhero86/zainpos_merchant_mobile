@@ -31,8 +31,8 @@ class NetworkSelectionScreen extends StatelessWidget {
              Text(
               'Network',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
             ),
              SizedBox(height: 32),
@@ -44,7 +44,6 @@ class NetworkSelectionScreen extends StatelessWidget {
                     icon: Image(image: AssetImage('assets/logos/bank.png'),
                     height: 24, width: 24,),
                     title: 'Bank Transfer',
-                    description: 'Transfer funds directly from your bank account',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(
                           builder: (context) => BankSelectionScreen(),
@@ -56,15 +55,13 @@ class NetworkSelectionScreen extends StatelessWidget {
                     padding:  EdgeInsets.only(left: 8.0, right: 8.0),
                     child: Divider(),
                   ),
-                  // Card Payment Option
                   networkOption(
                     icon: Image(image: AssetImage('assets/logos/credit-card-01.png'),
                     height: 24, width: 24,),
                     title: 'Card Payment',
-                    description: 'Pay using debit or credit card',
                     onTap: () {
-                      // Handle card payment selection
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => CardPaymentScreen()));
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => CardPaymentScreen()));
                     },
                   ),
                 ],

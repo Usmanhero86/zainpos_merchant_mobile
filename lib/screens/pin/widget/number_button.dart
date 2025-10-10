@@ -4,8 +4,15 @@ class NumberButton extends StatelessWidget {
   final String number;
   final Function(String) onPressed;
   final double size;
+  final Color? color;
 
-  const NumberButton({super.key, required this.number, required this.onPressed, this.size = 70,});
+  const NumberButton({
+    super.key,
+    required this.number,
+    required this.onPressed,
+    this.size = 70,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,17 +22,19 @@ class NumberButton extends StatelessWidget {
       child: TextButton(
         onPressed: () => onPressed(number),
         style: TextButton.styleFrom(
-          backgroundColor: Colors.white,
-          shape: CircleBorder(),
-          foregroundColor: Colors.black,
-          textStyle: TextStyle(
-            fontSize: size * 0.34,
-            fontWeight: FontWeight.w500,
-          ),
+          backgroundColor: Colors.blue[100],
+          shape: const CircleBorder(),
+          foregroundColor: Colors.blue, // This makes the text blue
           elevation: 2,
-          shadowColor: Colors.grey.withOpacity(0.5),
         ),
-        child: Text(number),
+        child: Text(
+          number,
+          style: TextStyle(
+            fontSize: 34.18,
+            fontWeight: FontWeight.w700,
+            color: Colors.blue, // Explicitly set text color to blue
+          ),
+        ),
       ),
     );
   }

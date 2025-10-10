@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zainpos_merchant_mobile/mappers/terminal_mapper.dart';
 import '../../../provider/terminal_provider.dart';
 import '../../../widgets/terminal_card.dart';
 
@@ -12,38 +11,116 @@ class TerminalsTab extends StatefulWidget {
 }
 
 class _TerminalsTabState extends State<TerminalsTab> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _showSearchBar = false;
+
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TerminalProvider>().fetchTerminals();
     });
   }
 
   @override
+  void dispose() {
+    _searchController
+      ..removeListener(_onSearchChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text;
+    context.read<TerminalProvider>().searchTerminals(query);
+  }
+
+  void _toggleSearchBar() {
+    setState(() {
+      _showSearchBar = !_showSearchBar;
+      if (!_showSearchBar) {
+        _searchController.clear();
+        context.read<TerminalProvider>().clearSearch();
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    context.read<TerminalProvider>().clearSearch();
+  }
+
+  void _applyFilter(TerminalFilter filter) {
+    context.read<TerminalProvider>().applyFilter(filter);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(
+        leading: _showSearchBar
+            ? IconButton(
+          icon: Icon(Icons.arrow_back, size: w * 0.07, color: Colors.black87),
+          onPressed: _toggleSearchBar,
+        )
+            : null,
+        title: _showSearchBar
+            ? Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300, width: 1),
+          ),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search by name, ID, account, status...',
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey),
+                onPressed: _clearSearch,
+              )
+                  : null,
+            ),
+          ),
+        )
+            : const Text(
           'Terminals',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
         ),
-        actions: [
+        elevation: 0,
+        actions: _showSearchBar
+            ? [
           IconButton(
-            onPressed: () => _showSearchDialog(context),
+            icon: const Icon(Icons.close, color: Colors.grey),
+            onPressed: _toggleSearchBar,
+          ),
+        ]
+            : [
+          IconButton(
+            onPressed: _toggleSearchBar,
             icon: const Image(
-              height: 16,
-              width: 16,
+              height: 24,
+              width: 24,
               image: AssetImage('assets/logos/searchIcon.png'),
             ),
           ),
           IconButton(
             onPressed: () => _showFilterDialog(context),
             icon: const Image(
-              height: 16,
-              width: 16,
+              height: 18,
+              width: 12,
               image: AssetImage('assets/logos/filterIcon.png'),
             ),
           ),
@@ -51,6 +128,44 @@ class _TerminalsTabState extends State<TerminalsTab> {
       ),
       body: Consumer<TerminalProvider>(
         builder: (context, terminalProvider, child) {
+          final displayTerminals = terminalProvider.searchQuery.isNotEmpty ||
+              terminalProvider.currentFilter != TerminalFilter.all
+              ? terminalProvider.filteredTerminals
+              : terminalProvider.terminals;
+
+          // Search info header
+          Widget? searchInfo;
+          if (terminalProvider.searchQuery.isNotEmpty ||
+              terminalProvider.currentFilter != TerminalFilter.all) {
+            searchInfo = Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.blue.shade50,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _buildSearchInfo(terminalProvider),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (terminalProvider.searchQuery.isNotEmpty ||
+                      terminalProvider.currentFilter != TerminalFilter.all)
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 16, color: Colors.blue),
+                      onPressed: () {
+                        _clearSearch();
+                        context.read<TerminalProvider>().applyFilter(TerminalFilter.all);
+                      },
+                    ),
+                ],
+              ),
+            );
+          }
+
           if (terminalProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -59,30 +174,50 @@ class _TerminalsTabState extends State<TerminalsTab> {
             return _buildErrorState(terminalProvider.error!);
           }
 
-          final terminals = terminalProvider.terminals;
-          if (terminals.isEmpty) {
-            return _buildEmptyState();
+          if (displayTerminals.isEmpty) {
+            return _buildEmptyState(
+              terminalProvider.searchQuery.isNotEmpty ||
+                  terminalProvider.currentFilter != TerminalFilter.all,
+            );
           }
 
-          return RefreshIndicator(
-            onRefresh: () => terminalProvider.refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: terminals.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final apiTerminal = terminals[index];
-
-                // Convert API Terminals to UI Terminal
-                final cardTerminal = apiTerminal.toCardModel();
-
-                return TerminalCard(terminal: cardTerminal);
-              },
-            ),
+          return Column(
+            children: [
+              if (searchInfo != null) searchInfo,
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => terminalProvider.refresh(),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: displayTerminals.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final terminal = displayTerminals[index]; // Use directly, no mapping needed
+                      return TerminalCard(terminal: terminal);
+                    },
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
     );
+  }
+
+  String _buildSearchInfo(TerminalProvider provider) {
+    final hasSearch = provider.searchQuery.isNotEmpty;
+    final hasFilter = provider.currentFilter != TerminalFilter.all;
+
+    if (hasSearch && hasFilter) {
+      return 'Showing ${provider.filteredTerminals.length} terminals for "${provider.searchQuery}" (${provider.currentFilter.displayName})';
+    } else if (hasSearch) {
+      return 'Showing ${provider.filteredTerminals.length} terminals for "${provider.searchQuery}"';
+    } else if (hasFilter) {
+      return 'Showing ${provider.filteredTerminals.length} ${provider.currentFilter.displayName.toLowerCase()} terminals';
+    }
+
+    return 'Showing all terminals';
   }
 
   Widget _buildErrorState(String error) {
@@ -117,60 +252,143 @@ class _TerminalsTabState extends State<TerminalsTab> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isSearching) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.point_of_sale, size: 64, color: Colors.grey),
+            Icon(
+              isSearching ? Icons.search_off : Icons.point_of_sale,
+              size: 64,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 16),
-            const Text(
-              'No Terminals Found',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              isSearching ? 'No Terminals Found' : 'No Terminals Available',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Your terminals will appear here once they are registered',
+            Text(
+              isSearching
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Your terminals will appear here once they are registered',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Colors.grey),
             ),
+            if (isSearching) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  _clearSearch();
+                  context.read<TerminalProvider>().applyFilter(TerminalFilter.all);
+                },
+                child: const Text('Clear Search'),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
+  void _showFilterDialog(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Search Terminals'),
-        content: const Text('Search functionality coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
+      builder: (context) {
+        return Consumer<TerminalProvider>(
+          builder: (context, provider, child) {
+            final stats = provider.statistics;
+
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Filter Terminals',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${stats['total']} terminals found',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Filter options
+                  ...TerminalFilter.values.map((filter) {
+                    final count = _getFilterCount(provider, filter);
+
+                    return ListTile(
+                      leading: Icon(
+                        filter.icon,
+                        color: provider.currentFilter == filter
+                            ? Colors.blue
+                            : Colors.grey,
+                      ),
+                      title: Text(filter.displayName),
+                      subtitle: Text(
+                        '$count terminals • ${filter.description}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      trailing: provider.currentFilter == filter
+                          ? const Icon(Icons.check, color: Colors.blue)
+                          : null,
+                      onTap: () {
+                        _applyFilter(filter);
+                        Navigator.pop(context);
+                      },
+                    );
+                  }).toList(),
+
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        _applyFilter(TerminalFilter.all);
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Clear Filter'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filter Terminals'),
-        content: const Text('Filter functionality coming soon!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+  int _getFilterCount(TerminalProvider provider, TerminalFilter filter) {
+    switch (filter) {
+      case TerminalFilter.all:
+        return provider.terminals.length;
+      case TerminalFilter.active:
+        return provider.terminals.where((t) => t.isActive == true).length;
+      case TerminalFilter.inactive:
+        return provider.terminals.where((t) => t.isActive == false).length;
+      case TerminalFilter.transferEnabled:
+        return provider.terminals.where((t) => t.transferEnabled == true).length;
+      case TerminalFilter.balanceEnabled:
+        return provider.terminals.where((t) => t.viewBalanceEnabled == true).length;
+      case TerminalFilter.reprintEnabled:
+        return provider.terminals.where((t) => t.reprintEnabled == true).length;
+    }
   }
 }

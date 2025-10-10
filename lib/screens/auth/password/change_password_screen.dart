@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../provider/change_password_provider.dart';
 import '../../../provider/login_provider.dart';
-import '../widgets/password_field.dart';
+import '../../account/widgets/password_field.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -56,11 +56,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
       );
 
-      _logoutAndRedirect();
+      logoutAndRedirect();
     }
   }
 
-  void _logoutAndRedirect() async {
+  void logoutAndRedirect() async {
     final loginProvider = context.read<LoginProvider>();
 
     showDialog(
@@ -90,7 +90,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
   }
 
-  String? _validatePassword(String? value) {
+  String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter password';
     }
@@ -113,6 +113,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         title: Text(
           'Change Password',
           style: TextStyle(
+            color: Colors.grey,
             fontSize: isTablet ? 20 : 18,
           ),
         ),
@@ -172,7 +173,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               PasswordField(
                                 controller: currentCtrl,
                                 hint: 'Current Password',
-                                validator: _validatePassword,
+                                validator: validatePassword,
                               ),
                               SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
 
@@ -180,7 +181,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               PasswordField(
                                 controller: newCtrl,
                                 hint: 'New Password',
-                                validator: _validatePassword,
+                                validator: validatePassword,
                               ),
                               SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
 
@@ -192,7 +193,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   if (value != newCtrl.text) {
                                     return 'Passwords do not match';
                                   }
-                                  return _validatePassword(value);
+                                  return validatePassword(value);
                                 },
                               ),
                               SizedBox(height: isDesktop ? 32 : isTablet ? 28 : 24),

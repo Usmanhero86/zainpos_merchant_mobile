@@ -37,7 +37,6 @@ DateTime _parseDate(String dateString) {
 
 double _parseAmount(String amountString) {
   try {
-    // Remove any currency symbols or commas, then parse
     final cleaned = amountString.replaceAll(RegExp(r'[^\d.]'), '');
     return double.tryParse(cleaned) ?? 0.0;
   } catch (e) {

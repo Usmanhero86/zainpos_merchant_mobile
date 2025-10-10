@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../services/models/response_model/dispute_list_response.dart';
 
 class FailedTransactionScreen extends StatelessWidget {
- const FailedTransactionScreen({super.key});
+  const FailedTransactionScreen({super.key, required this.dispute});
+  final DisputeModel dispute;
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +22,10 @@ class FailedTransactionScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           'Back to transactions',
           style: TextStyle(fontSize: 16),
         ),
@@ -32,52 +34,66 @@ class FailedTransactionScreen extends StatelessWidget {
         foregroundColor: Colors.black,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Transactions Details', style: TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text(
+              'Transactions Details',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16
+              ),
+            ),
+            const SizedBox(height: 16),
             Card(
               color: Colors.grey[50],
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    buildRow('Actual Amount', '₦22,500.00', labelStyle, valueStyle),
-                    buildRow('Settled Amount', '₦22,400.00', labelStyle, valueStyle),
-                    buildRow('Charged Amount', '₦100.00', labelStyle, valueStyle),
-                    buildRow('Terminal Name', 'Nassarawa Terminal', labelStyle, valueStyle),
+                    _buildRow('Actual Amount', '₦${dispute.txnAmount.toStringAsFixed(2)}', labelStyle, valueStyle),
+                    _buildRow('Settled Amount', '₦${dispute.txnAmount.toStringAsFixed(2) ?? "0.00"}', labelStyle, valueStyle),
+                    _buildRow('Charged Amount', '₦${dispute.txnAmount.toStringAsFixed(2) ?? "0.00"}', labelStyle, valueStyle),
+                    _buildRow('Terminal Name', dispute.terminalId, labelStyle, valueStyle),
 
-                    Divider(height: 32),
+                    const Divider(height: 32),
 
-                    Text('PAYMENT INFORMATION',
+                    Text(
+                      'PAYMENT INFORMATION',
                       style: TextStyle(
                         color: Colors.blue[700],
                         fontWeight: FontWeight.bold,
                         fontSize: screenWidth * 0.04,
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                    buildRow('Transaction Type', 'Card', labelStyle, valueStyle),
+                    _buildRow('Transaction Type', dispute.cardType ?? 'Card', labelStyle, valueStyle),
 
                     Text('Status', style: labelStyle),
-                    Text('Failed', style: valueStyle.copyWith(color: Colors.red)),
+                    Text(
+                      dispute.status.toUpperCase(),
+                      style: valueStyle.copyWith(color: _getStatusColor(dispute.status)),
+                    ),
 
-                    SizedBox(height: 12),
-                    buildRow('Transaction Reference', 'REF-269528555', labelStyle, valueStyle),
-                    buildRow('Date and time', '2024-02-16 - T15:02:47.26', labelStyle, valueStyle,),
+                    const SizedBox(height: 12),
+                    _buildRow('Transaction Reference', dispute.txnRrn, labelStyle, valueStyle),
+                    _buildRow('Date and time', _formatDateTime(dispute.txnDate), labelStyle, valueStyle),
 
-                    Divider(height: 32),
+                    const Divider(height: 32),
 
                     TextButton.icon(
                       onPressed: () {
+                        // Handle dispute logging
                       },
-                      icon: Image(image: AssetImage('assets/logos/coins-swap-01.png'),
-                      height: 13.33, width: 13.33,),
-                      label: Text(
+                      icon: Image.asset(
+                        'assets/logos/coins-swap-01.png',
+                        height: 13.33,
+                        width: 13.33,
+                      ),
+                      label: const Text(
                         'Log Dispute',
                         style: TextStyle(color: Colors.blue),
                       ),
@@ -92,9 +108,9 @@ class FailedTransactionScreen extends StatelessWidget {
     );
   }
 
-  Widget buildRow(String label, String value, TextStyle labelStyle, TextStyle valueStyle,) {
+  Widget _buildRow(String label, String value, TextStyle labelStyle, TextStyle valueStyle) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -103,5 +119,26 @@ class FailedTransactionScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatDateTime(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} - T${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'RESOLVED':
+        return Colors.green;
+      case 'OPEN':
+        return Colors.blue;
+      case 'REFUNDED':
+        return Colors.brown;
+      case 'PENDING':
+        return Colors.orange;
+      case 'FAILED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }

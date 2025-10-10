@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:zainpos_merchant_mobile/provider/payout_provider.dart';
+import 'package:zainpos_merchant_mobile/screens/transactions/transaction_details_screen.dart';
 
 class PayoutTransactionsScreen extends StatefulWidget {
   const PayoutTransactionsScreen({super.key});
@@ -57,76 +58,103 @@ class _PayoutTransactionsScreenState extends State<PayoutTransactionsScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(scale * 0.8),
             itemCount: payouts.length,
-            itemBuilder: (context, index) {
-              final p = payouts[index];
-              final amount = double.tryParse(p.amount) ?? 0;
-              final formattedDate =
-                  '${p.txnDate.year}-${p.txnDate.month.toString().padLeft(2, '0')}-${p.txnDate.day.toString().padLeft(2, '0')} '
-                  '${TimeOfDay.fromDateTime(p.txnDate).format(context)}';
+              itemBuilder: (context, index) {
+                final p = payouts[index];
+                final amount = double.tryParse(p.amount) ?? 0;
+                final formattedDate =
+                    '${p.txnDate.year}-${p.txnDate.month.toString().padLeft(2, '0')}-${p.txnDate.day.toString().padLeft(2, '0')} '
+                    '${TimeOfDay.fromDateTime(p.txnDate).format(context)}';
 
-              return Card(
-                color: Colors.white,
-                margin: EdgeInsets.symmetric(vertical: scale * 0.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(scale * 0.7),
-                ),
-                elevation: 1,
-                child: Padding(
-                  padding: EdgeInsets.all(scale),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// Reference & Amount
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                return Card(
+                  color: Colors.white,
+                  margin: EdgeInsets.symmetric(vertical: scale * 0.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(scale * 0.7)),
+                  elevation: 0.1,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => TransactionDetailsScreen(
+                            transactionType: 'Payout',
+                            amount: amount,
+                            terminalName: p.terminalName,
+                            transactionReference: p.txnRef,
+                            date: formattedDate,
+                            status: 'SUCCESS',
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.all(scale),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              p.txnRef,
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontSize: scale * 0.8,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  p.txnRef,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              overflow: TextOverflow.ellipsis,
+                              Text(
+                                '₦${_formatAmount(amount.toStringAsFixed(2))}',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => TransactionDetailsScreen(
+                                        transactionType: 'Payout',
+                                        amount: amount,
+                                        terminalName: p.terminalName,
+                                        transactionReference: p.txnRef,
+                                        date: formattedDate,
+                                        status: 'SUCCESS',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.arrow_forward_ios, size: 13),
+                              ),
+                            ],
+                          ),
+                          /// Terminal name
+                          Text(
+                            p.terminalName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
                             ),
                           ),
+                          /// Reference (again) and date/time
                           Text(
-                            '₦${_formatAmount(amount.toStringAsFixed(2))}',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontSize: scale * 1.1,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                            '${p.txnRef}\n$formattedDate',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: scale * 0.1),
-
-                      /// Terminal Name
-                      Text(
-                        p.terminalName,
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontSize: scale,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: scale * 0.2),
-
-                      /// Zainpay ref and Date
-                      Text(
-                        '${p.zainpayPaymentRef.isNotEmpty ? p.zainpayPaymentRef : p.txnRef}\n$formattedDate',
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: scale * 0.8,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              }
+              ),
         );
       },
     );

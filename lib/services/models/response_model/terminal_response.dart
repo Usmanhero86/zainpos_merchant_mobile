@@ -14,9 +14,12 @@ class TerminalResponse {
   Map<String, dynamic> toJson() => {
     'data': data.map((t) => t.toJson()).toList(),
   };
+
+  // Helper method to check if the request was successful
+  bool get isSuccess => data.isNotEmpty;
 }
 
-class Terminals{
+class Terminals {
   final String? authCode;
   final String? businessAddress;
   final String? businessName;

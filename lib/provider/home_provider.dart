@@ -1,7 +1,5 @@
-// lib/provider/home_provider.dart
 import 'package:flutter/foundation.dart';
 import 'package:zainpos_merchant_mobile/services/models/response_model/home_response.dart';
-
 import '../services/api/api_service.dart';
 
 class HomeProvider with ChangeNotifier {
@@ -36,7 +34,6 @@ class HomeProvider with ChangeNotifier {
 
     try {
       _homeData = await _apiService.fetchHomeData();
-
       _setLoading(false);
     } catch (e) {
       _setError('Failed to load home data: ${e.toString()}');
@@ -44,10 +41,14 @@ class HomeProvider with ChangeNotifier {
     }
   }
 
-  // Get total balance (sum of all settled amounts)
+  // Get total balance from home data
   double get totalBalance {
     if (_homeData == null) return 0.0;
 
+    // If your API returns a direct wallet balance, use it like this:
+    // return _homeData!.walletBalance ?? 0.0;
+
+    // If you need to calculate from transactions, use this:
     return _homeData!.recentTransactions.fold(0.0, (sum, transaction) {
       return sum + transaction.settledAmountDouble;
     });
@@ -68,7 +69,6 @@ class HomeProvider with ChangeNotifier {
   // Get active terminals
   List<Terminal> get activeTerminals {
     if (_homeData == null) return [];
-
     return _homeData!.terminals.where((terminal) => terminal.isActive).toList();
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 Widget networkOption({
   required Widget icon,
   required String title,
-  required String description,
   required VoidCallback onTap,
 }) {
   return Column(
@@ -23,24 +22,24 @@ Widget networkOption({
                     Text(
                       title,
                       style:  TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      description,
-                      style:  TextStyle(
                         fontSize: 14,
-                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                    // SizedBox(height: 4),
+                    // Text(
+                    //   description,
+                    //   style:  TextStyle(
+                    //     fontSize: 14,
+                    //     color: Colors.grey,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                size: 16,
+                size: 20,
                 color: Colors.grey,
               ),
             ],

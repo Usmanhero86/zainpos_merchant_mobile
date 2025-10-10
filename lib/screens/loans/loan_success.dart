@@ -27,7 +27,7 @@ class LoanSuccess extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: 500, // prevents it from stretching too wide on tablets
+                maxWidth: 500,
               ),
               child: TransferSuccessWidget(
                 amount: amount.toDouble(),

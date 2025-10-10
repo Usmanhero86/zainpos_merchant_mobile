@@ -34,7 +34,7 @@ class BuildTransactionCard extends StatelessWidget {
         horizontal: scale * 0.5,
         vertical: scale * 0.3,
       ),
-      elevation: 1,
+      elevation: 0.3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(scale * 0.8),
       ),
@@ -50,26 +50,28 @@ class BuildTransactionCard extends StatelessWidget {
                 Text(
                   status.toUpperCase() ,
                   style: TextStyle(
-                    fontSize: scale * 0.7,
+                    fontSize: 10,
                     color: _getStatusColor(status),
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 Expanded(
-                  child: Text(' - REF- $reference', style: TextStyle(
+                  child: Text(' $reference', style: TextStyle(
                     color: Colors.grey,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
                     overflow: TextOverflow.ellipsis,
                   ),),
                 ),
                 Text(
                  '₦$displayAmount',
                   style: TextStyle(
-                    fontSize: scale * 1.1,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios),
+                Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
             SizedBox(height: scale * 0.4),
@@ -78,8 +80,8 @@ class BuildTransactionCard extends StatelessWidget {
             Text(
               terminal,
               style: TextStyle(
-                fontSize: scale * 0.9,
-                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: Colors.black87,
               ),
             ),
@@ -92,8 +94,9 @@ class BuildTransactionCard extends StatelessWidget {
                   child: Text(
                     type.toUpperCase(),
                     style: TextStyle(
-                      fontSize: scale * 0.8,
+                      fontSize: 10,
                       color: Colors.grey,
+                      fontWeight: FontWeight.w400
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -103,7 +106,8 @@ class BuildTransactionCard extends StatelessWidget {
                   child: Text(
                     date,
                     style: TextStyle(
-                      fontSize: scale * 0.8,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
                       color: Colors.grey,
                     ),
                     overflow: TextOverflow.ellipsis,

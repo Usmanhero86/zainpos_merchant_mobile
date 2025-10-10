@@ -31,6 +31,7 @@ class BuildInfoSection extends StatelessWidget {
           title,
           style: TextStyle(
             fontSize: titleFontSize ?? defaultTitleSize,
+            fontWeight: FontWeight.w400,
             color: titleColor ?? Colors.grey,
           ),
         ),

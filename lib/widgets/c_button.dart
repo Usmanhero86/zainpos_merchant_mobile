@@ -14,7 +14,7 @@ class CButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.backgroundColor = const Color(0xFF0052cc),
-    this.borderRadius = 20,
+    this.borderRadius = 50,
     this.fontSize = 16,
     this.padding,
     this.textColor = Colors.white,
@@ -25,7 +25,7 @@ class CButton extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SizedBox(
-      width: double.infinity,
+      width: 320,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(

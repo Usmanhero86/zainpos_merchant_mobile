@@ -12,9 +12,9 @@ class CbnLicenseRow extends StatelessWidget {
     super.key,
     this.text = 'Licensed by Central Bank of Nigeria (CBN)',
     this.imagePath = 'assets/logos/cbn2.png',
-    this.fontSize = 13,
-    this.imageHeight = 25,
-    this.imageWidth = 25,
+    this.fontSize = 12,
+    this.imageHeight = 24,
+    this.imageWidth = 24,
     this.textColor = Colors.black,
   });
 
@@ -28,6 +28,7 @@ class CbnLicenseRow extends StatelessWidget {
           style: TextStyle(
             color: textColor,
             fontSize: fontSize,
+            fontWeight: FontWeight.w400
           ),
         ),
         Image.asset(
