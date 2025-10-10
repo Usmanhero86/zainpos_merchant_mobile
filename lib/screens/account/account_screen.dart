@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:zainpos_merchant_mobile/screens/account/password/change_password_screen.dart';
-import 'package:zainpos_merchant_mobile/screens/account/password/set_pin_screen.dart';
+import 'package:provider/provider.dart';
+import '../auth/password/change_password_screen.dart';
+import '../auth/password/set_pin_screen.dart';
 import 'widgets/action_button.dart';
 import '../../widgets/build_info_section.dart';
+import '../../provider/login_provider.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final loginProvider = Provider.of<LoginProvider>(context);
+    final user = loginProvider.currentUser;
     final size = MediaQuery.of(context).size;
     final width = size.width;
     final height = size.height;
 
     final double titleFont = width * 0.055;
-    final double nameFont = width * 0.07;
-    final double smallFont = width * 0.04;
-    final double avatarRadius = width * 0.064;
     final double spacing = height * 0.02;
+
+    // Show loading if user data is not loaded yet
+    if (user == null && loginProvider.isLoggedIn) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -41,11 +49,10 @@ class AccountScreen extends StatelessWidget {
           children: [
 
             // Profile header
-            CircleAvatar(
-              radius: 64,
+            CircleAvatar(radius: 64,
               backgroundColor: Colors.blue[50],
               child: Text(
-                'GM',
+                user?.initials ?? 'U',
                 style: TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
@@ -54,11 +61,10 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: spacing),
-            Text(
-              'Gidado Mustapha',
+            Text(user?.fullName ?? 'User Name',
               style: TextStyle(
-                fontSize: nameFont,
-                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(height: spacing * 1.2),
@@ -66,33 +72,45 @@ class AccountScreen extends StatelessWidget {
             // Business Information Section
             BuildInfoSection(
               title: 'Business Name',
-              content: 'Gidado Mustapha Enterprises',
-              titleFontSize: smallFont,
-              contentFontSize: smallFont,
-            ),
-            SizedBox(height: spacing),
-
-            BuildInfoSection(
-              title: 'Address',
-              content: 'Kano, Nigeria',
-              titleFontSize: smallFont,
-              contentFontSize: smallFont,
+              content: user?.businessName ?? 'Business Name',
+              titleFontSize: 12,
+              contentFontSize: 14,
             ),
             SizedBox(height: spacing),
 
             BuildInfoSection(
               title: 'Email Address',
-              content: 'gidadomustapha@gmail.com',
-              titleFontSize: smallFont,
-              contentFontSize: smallFont,
+              content: user?.email ?? 'user@example.com',
+              titleFontSize: 12,
+              contentFontSize: 14,
             ),
             SizedBox(height: spacing),
 
             BuildInfoSection(
               title: 'Phone Number',
-              content: '+234 901 234-5678',
-              titleFontSize: smallFont,
-              contentFontSize: smallFont,
+              content: user?.phoneNumber.isNotEmpty == true
+                  ? formatPhoneNumber(user!.phoneNumber)
+                  : 'Not provided',
+              titleFontSize: 12,
+              contentFontSize: 14,
+            ),
+
+            SizedBox(height: spacing),
+
+            BuildInfoSection(
+              title: 'Username',
+              content: user?.username ?? 'username',
+              titleFontSize: 12,
+              contentFontSize: 14,
+            ),
+
+            SizedBox(height: spacing),
+
+            BuildInfoSection(
+              title: 'Role',
+              content: user?.role ?? 'Merchant',
+              titleFontSize: 12,
+              contentFontSize: 14,
             ),
 
             SizedBox(height: spacing),
@@ -102,47 +120,74 @@ class AccountScreen extends StatelessWidget {
             ActionButton(
               icon: Image.asset(
                 'assets/logos/featuredIcon.png',
-                height: 38,
-                width: 38,
-              ),
+                height: 38, width: 38),
               text: 'Change Password',
-              textSize: smallFont,
+              textSize: 14,
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(
-                    builder: (context)=> ChangePasswordScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> ChangePasswordScreen()));
               },
             ),
             SizedBox(height: spacing),
 
-            ActionButton(
-              icon: Image.asset(
+            ActionButton(icon: Image.asset(
                 'assets/logos/FeaturedIcon2.png',
-                height:38,
-                width: 38,
-              ),
+                height:38, width: 38),
               text: 'Set PIN',
-              textSize: smallFont,
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(
-                    builder: (context)=> SetPinScreen()));
-              },
-            ),
+              textSize: 14,
+              onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> SetPinScreen()));}),
             SizedBox(height: spacing),
 
-            ActionButton(
-              icon: Image.asset(
-                'assets/logos/FeaturedIcon3.png',
-                height:38,
-                width: 38,
-              ),
-              text: 'Log Out',
-              textSize: smallFont,
-              onTap: () {},
+            ActionButton(icon: Image.asset('assets/logos/FeaturedIcon3.png', height:38, width: 38),
+              text: 'Log Out', textSize: 14, onTap: () {
+                showLogoutDialog(context, loginProvider);
+              },
               isLogout: true,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  String formatPhoneNumber(String phone) {
+    // Format phone number for better display
+    if (phone.startsWith('+234')) {
+      return '+234 ${phone.substring(4, 7)} ${phone.substring(7, 10)}-${phone.substring(10)}';
+    }
+    return phone;
+  }
+
+  void showLogoutDialog(BuildContext context, LoginProvider loginProvider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Log Out'),
+          content: Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                loginProvider.logout();
+                // Navigate to login screen
+                Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                        (route) => false
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: Text('Log Out'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

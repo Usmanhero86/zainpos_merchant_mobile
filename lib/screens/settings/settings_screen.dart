@@ -37,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
           // Drag handle
           Container(
             width: w * 0.1,
-            height: h * 0.002,
+            height: h * 0.0017,
             decoration: BoxDecoration(
               color: Colors.grey.shade300,
               borderRadius: BorderRadius.circular(h * 0.003),

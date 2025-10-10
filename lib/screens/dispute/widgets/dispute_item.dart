@@ -1,56 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:zainpos_merchant_mobile/screens/dispute/dispute_resolved.dart';
-import 'package:zainpos_merchant_mobile/screens/dispute/model/dispute_model.dart';
 import 'package:zainpos_merchant_mobile/screens/transactions/failed_transaction_screen.dart';
-import '../../transactions/resolved_transaction_Screen.dart';
+import '../../../services/models/response_model/dispute_list_response.dart';
 
 class DisputeItem extends StatelessWidget {
-  const DisputeItem({super.key, required this.transaction});
-  final DisputeModel transaction;
+  const DisputeItem({super.key, required this.dispute});
+  final DisputeModel dispute;
+
+  // Helper method to get color based on status
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'RESOLVED':
+        return Colors.green;
+      case 'OPEN':
+        return Colors.blue;
+      case 'REFUNDED':
+        return Colors.brown;
+      case 'PENDING':
+        return Colors.orange;
+      case 'FAILED':
+        return Colors.red;
+      default:
+        return Colors.grey; // Default color for unknown status
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: (){
+      onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) {
-            if(transaction.resolved == 'RESOLVED') {
-              return DisputeResolved();
+            if (dispute.status.toUpperCase() == 'RESOLVED') {
+              return DisputeResolved(dispute: dispute);
             } else {
-              return FailedTransactionScreen();
+              return FailedTransactionScreen(dispute: dispute);
             }
-
-          }  ),
+          }),
         );
       },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(
-                  transaction.status,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
                 Expanded(
                   child: Text(
-                    ' - REF: ${transaction.reference}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    'TRN-REF: ${dispute.txnRrn}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
                 Text(
-                  '₦${transaction.amount.toStringAsFixed(2)}',
+                  '₦${dispute.txnAmount.toStringAsFixed(2)}',
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                     color: Colors.black,
                   ),
                 ),
@@ -59,27 +70,44 @@ class DisputeItem extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) {
-                        if(transaction.resolved == 'RESOLVED') {
-                          return DisputeResolved();
+                        if (dispute.status.toUpperCase() == 'RESOLVED') {
+                          return DisputeResolved(dispute: dispute);
                         } else {
-                          return FailedTransactionScreen();
+                          return FailedTransactionScreen(dispute: dispute);
                         }
-
-                      }  ),
+                      }),
                     );
-
                   },
-                  icon: const Icon(Icons.arrow_forward_ios, size: 12),
+                  icon: const Icon(Icons.arrow_forward_ios, size: 14),
                 ),
               ],
             ),
-            Text(transaction.terminal,
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              dispute.terminalId,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             Row(
               children: [
-                Text('${transaction.resolved} ',
-                    style: TextStyle(color: transaction.resolved == 'RESOLVED' ? Colors.green : Colors.grey,)),
-                Text(' ${transaction.date}', style: TextStyle(color: Colors.grey),)
+                Text(
+                  dispute.status.toUpperCase(),
+                  style: TextStyle(
+                    color: _getStatusColor(dispute.status),
+                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  dispute.txnDate.toString().split(' ').first,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 10,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
           ],
@@ -87,6 +115,4 @@ class DisputeItem extends StatelessWidget {
       ),
     );
   }
-
 }
-

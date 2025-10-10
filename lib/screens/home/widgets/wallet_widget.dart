@@ -1,61 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../provider/home_provider.dart';
 
-Widget walletBalanceCard(double totalBalance, double screenWidth) {
-  return Card(
-    elevation: 4,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Wallet Balance',
-            style: TextStyle(
-              fontSize: screenWidth * 0.04,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+class WalletBalanceCard extends StatefulWidget {
+  const WalletBalanceCard({super.key});
+
+  @override
+  State<WalletBalanceCard> createState() => _WalletBalanceCardState();
+}
+
+class _WalletBalanceCardState extends State<WalletBalanceCard> {
+  bool _obscureBalance = true;
+
+  void _toggleBalanceVisibility() {
+    setState(() {
+      _obscureBalance = !_obscureBalance;
+    });
+  }
+
+  String _getDisplayBalance(double totalBalance) {
+    if (_obscureBalance) {
+      return '••••••';
+    }
+    // Divide by 100 and format to 2 decimal places
+    final actualBalance = totalBalance / 100;
+    return 'N${actualBalance.toStringAsFixed(2)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final homeProvider = Provider.of<HomeProvider>(context);
+    final totalBalance = homeProvider.totalBalance;
+
+    return Card(
+      color: Colors.blue,
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Image(
+              image: const AssetImage('assets/logos/FeaturedIcon5.png'),
+              height: 38,
+              width: 38,
             ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'N${totalBalance.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: screenWidth * 0.08,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Wallet Balance',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    _getDisplayBalance(totalBalance),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text('Add Money'),
-                ),
+            IconButton(
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                iconSize: 30),
+              icon: Icon(
+                _obscureBalance
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+                color: Colors.blue,
               ),
-              SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.blue),
-                  ),
-                  child: Text(
-                    'Withdraw',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+              onPressed: _toggleBalanceVisibility,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              iconSize:20,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

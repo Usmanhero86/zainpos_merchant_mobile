@@ -15,6 +15,7 @@ class BankSelectionScreen extends StatefulWidget {
 
 class _BankSelectionScreenState extends State<BankSelectionScreen> {
   final TextEditingController _searchController = TextEditingController();
+  bool _showSearchBar = false;
 
   @override
   void initState() {
@@ -38,10 +39,31 @@ class _BankSelectionScreenState extends State<BankSelectionScreen> {
   }
 
   void _filterBanks() {
-    context.read<BankListProvider>().setSearchQuery(_searchController.text.toLowerCase());
     final query = _searchController.text.toLowerCase();
     final provider = Provider.of<BankListProvider>(context, listen: false);
     provider.setSearchQuery(query);
+  }
+
+  void _toggleSearchBar() {
+    setState(() {
+      _showSearchBar = !_showSearchBar;
+      if (!_showSearchBar) {
+        _searchController.clear();
+        final provider = Provider.of<BankListProvider>(context, listen: false);
+        provider.clearSearch();
+      }
+    });
+  }
+
+  void _handleSearch(String query) {
+    final provider = Provider.of<BankListProvider>(context, listen: false);
+    provider.setSearchQuery(query.toLowerCase());
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    final provider = Provider.of<BankListProvider>(context, listen: false);
+    provider.clearSearch();
   }
 
   int _calculateSuccessRate(String bankName) {
@@ -54,7 +76,6 @@ class _BankSelectionScreenState extends State<BankSelectionScreen> {
     final size = MediaQuery.of(context).size;
     final w = size.width;
 
-    final double headingFont = w * 0.045;
     final double bankNameFont = w * 0.04;
     final double ringSize = w * 0.12;
     final double padding = w * 0.04;
@@ -63,13 +84,46 @@ class _BankSelectionScreenState extends State<BankSelectionScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, size: w * 0.07,
-              color: Colors.black87),
+        leading: _showSearchBar
+            ? IconButton(
+          icon: Icon(Icons.arrow_back, size: w * 0.07, color: Colors.black87),
+          onPressed: () {
+            setState(() {
+              _showSearchBar = false;
+              _searchController.clear();
+              final provider = Provider.of<BankListProvider>(context, listen: false);
+              provider.clearSearch();
+            });
+          },
+        )
+            : IconButton(
+          icon: Icon(Icons.arrow_back, size: 24, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          'Back to Network',
+        title: _showSearchBar
+            ? SearchBar(
+          backgroundColor: WidgetStateProperty.all(Colors.white70),
+          shadowColor: WidgetStateProperty.all(Colors.transparent),
+          surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
+          elevation: WidgetStateProperty.all(0),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade300, width: 1),
+            ),
+          ),
+          controller: _searchController,
+          hintText: 'Search banks...',
+          onChanged: _handleSearch,
+          trailing: [
+            IconButton(
+              icon: Icon(Icons.close, size: w * 0.05, color: Colors.grey),
+              onPressed: _clearSearch,
+            ),
+          ],
+        )
+            : Text(
+          'Back',
           style: TextStyle(
             color: Colors.black38,
             fontSize: w * 0.045,
@@ -77,47 +131,22 @@ class _BankSelectionScreenState extends State<BankSelectionScreen> {
           ),
         ),
         elevation: 0,
-        actions: [
+        actions: _showSearchBar
+            ? [
           IconButton(
-            icon: Icon(Icons.refresh, size: w * 0.06),
-            onPressed: () {
-              final provider = Provider.of<BankListProvider>(context, listen: false);
-              provider.refresh();
-            },
+            icon: Icon(Icons.close, size: w * 0.06, color: Colors.grey),
+            onPressed: _toggleSearchBar,
+          ),
+        ]
+            : [
+          IconButton(
+            icon: Icon(Icons.search, size: w * 0.06, color: Colors.blue),
+            onPressed: _toggleSearchBar,
           ),
         ],
       ),
       body: Column(
         children: [
-          // Search Bar
-          Padding(
-            padding: EdgeInsets.all(padding),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search banks...',
-                prefixIcon: Icon(Icons.search, color: Colors.grey),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.clear, color: Colors.grey),
-                  onPressed: () {
-                    _searchController.clear();
-                    final provider = Provider.of<BankListProvider>(context, listen: false);
-                    provider.clearSearch();
-                  },
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-          ),
-
           // Header
           Padding(
             padding: EdgeInsets.symmetric(horizontal: padding),
@@ -126,8 +155,8 @@ class _BankSelectionScreenState extends State<BankSelectionScreen> {
               child: Text(
                 'Bank Transfer',
                 style: TextStyle(
-                  fontSize: headingFont,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
                   color: Colors.grey.shade700,
                 ),
               ),
@@ -289,6 +318,4 @@ class _BankSelectionScreenState extends State<BankSelectionScreen> {
       ),
     );
   }
-
 }
-

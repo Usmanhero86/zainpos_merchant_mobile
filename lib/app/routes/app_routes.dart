@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../screens/account/account_screen.dart';
-import '../../screens/account/password/change_password_screen.dart';
+import '../../screens/auth/password/change_password_screen.dart';
+import '../../screens/auth/password/otp_request_screen.dart';
+import '../../screens/auth/password/reset_password_screen.dart';
+import '../../screens/auth/password/verify_otp_screen.dart';
 import '../../screens/dispute/dispute_screen.dart';
 import '../../screens/loans/loan_request_screen.dart';
 import '../../screens/splash/splash_screen.dart';
@@ -31,5 +34,8 @@ class AppRouter {
     loans: (_) => const LoanRequestScreen(),
     accounts: (_) => const AccountScreen(),
     changePassword: (context) => const ChangePasswordScreen(),
+    '/request-otp': (_) => const OtpRequestScreen(),
+    '/verify-otp': (_) =>  OtpVerificationScreen( email: '', secretKey: '',),
+    '/reset-password': (_) => const ResetPasswordScreen(email: '', secretKey: '',),
   };
 }

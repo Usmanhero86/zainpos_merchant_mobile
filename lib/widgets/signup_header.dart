@@ -28,8 +28,8 @@ crossAxisAlignment: CrossAxisAlignment.start,
                   title,
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: titleFontSize,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -51,7 +51,8 @@ crossAxisAlignment: CrossAxisAlignment.start,
             subtitle,
             style: TextStyle(
               color: Colors.grey,
-              fontSize: subtitleFontSize,
+              fontSize: 12,
+              fontWeight: FontWeight.w400
             ),
           ),
 

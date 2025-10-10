@@ -1,15 +1,20 @@
 import 'dart:convert';
 
 class DisputeListResponse {
-  final List<DisputeItem> data;
+  final List<DisputeModel> data;
+  final Pagination pagination;
 
-  DisputeListResponse({required this.data});
+  DisputeListResponse({
+    required this.data,
+    required this.pagination,
+  });
 
   factory DisputeListResponse.fromJson(Map<String, dynamic> json) {
     return DisputeListResponse(
       data: (json['data'] as List<dynamic>)
-          .map((e) => DisputeItem.fromJson(e))
+          .map((e) => DisputeModel.fromJson(e))
           .toList(),
+      pagination: Pagination.fromJson(json['pagination']),
     );
   }
 
@@ -17,7 +22,7 @@ class DisputeListResponse {
       DisputeListResponse.fromJson(json.decode(str));
 }
 
-class DisputeItem {
+class DisputeModel {
   final String disputeId;
   final String terminalId;
   final String cardType;
@@ -25,7 +30,7 @@ class DisputeItem {
   final String txnRrn;
   final String txnReference;
   final DateTime txnDate;
-  final String txnAmount;
+  final double txnAmount;
   final String txnResponseMessage;
   final String customerAccountName;
   final String customerAccountNumber;
@@ -34,7 +39,7 @@ class DisputeItem {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  DisputeItem({
+  DisputeModel({
     required this.disputeId,
     required this.terminalId,
     required this.cardType,
@@ -52,8 +57,8 @@ class DisputeItem {
     required this.updatedAt,
   });
 
-  factory DisputeItem.fromJson(Map<String, dynamic> json) {
-    return DisputeItem(
+  factory DisputeModel.fromJson(Map<String, dynamic> json) {
+    return DisputeModel(
       disputeId: json['dispute_id'] ?? '',
       terminalId: json['terminal_id'] ?? '',
       cardType: json['card_type'] ?? '',
@@ -61,7 +66,7 @@ class DisputeItem {
       txnRrn: json['txn_rrn'] ?? '',
       txnReference: json['txn_reference'] ?? '',
       txnDate: DateTime.parse(json['txn_date']),
-      txnAmount: json['txn_amount'] ?? '',
+      txnAmount: _parseAmount(json['txn_amount']),
       txnResponseMessage: json['txn_response_message'] ?? '',
       customerAccountName: json['customer_account_name'] ?? '',
       customerAccountNumber: json['customer_account_number'] ?? '',
@@ -69,6 +74,33 @@ class DisputeItem {
       status: json['status'] ?? '',
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+    );
+  }
+
+  /// Safely parse txn_amount (handles commas like "1,000")
+  static double _parseAmount(dynamic amount) {
+    if (amount == null) return 0.0;
+    final str = amount.toString().replaceAll(',', '');
+    return double.tryParse(str) ?? 0.0;
+  }
+}
+
+class Pagination {
+  final int totalCount;
+  final int page;
+  final int limit;
+
+  Pagination({
+    required this.totalCount,
+    required this.page,
+    required this.limit,
+  });
+
+  factory Pagination.fromJson(Map<String, dynamic> json) {
+    return Pagination(
+      totalCount: json['total_count'] ?? 0,
+      page: json['page'] ?? 1,
+      limit: json['limit'] ?? 25,
     );
   }
 }

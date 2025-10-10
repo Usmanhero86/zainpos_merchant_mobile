@@ -4,23 +4,23 @@ import '../../../services/models/response_model/bank_deposit_history_response.da
 
 class TransactionsList extends StatelessWidget {
   final List<BankDepositItem> data;
- const TransactionsList({super.key, required this.data});
+  const TransactionsList({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       itemCount: data.length,
       itemBuilder: (context, index) {
         final tx = data[index];
         return Card(
           color: Colors.white,
-          margin: EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -29,39 +29,48 @@ class TransactionsList extends StatelessWidget {
                     Expanded(
                       child: Text(
                         tx.txnRef,
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                        style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
-                      '₦${formatAmount(tx.amountAfterCharges)}',
-                      style: TextStyle(
+                      '₦${_formatAmount(tx.amountAfterCharges)}',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
-
                   ],
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   tx.terminalName,
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold
                   ),
                 ),
-                if (tx.txnRef != null && tx.txnRef.isNotEmpty) ...[
-                  SizedBox(height: 2),
-                  Text(
-                    tx.txnRef,
-                    style: TextStyle(fontSize: 13, color: Colors.grey
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  'From: ${tx.senderAccountName} - ${tx.senderBankName}',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey
                   ),
-                ],
-                SizedBox(height: 4),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'To: ${tx.beneficiaryAccountName} - ${tx.beneficiaryBankName}',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Text(
                   DateFormat('yyyy-MM-dd hh:mm a').format(tx.txnDate),
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -70,21 +79,27 @@ class TransactionsList extends StatelessWidget {
       },
     );
   }
-}
-String formatAmount(dynamic raw) {
-  double value;
 
-  if (raw is int) {
-    value = raw / 100;
-  } else if (raw is double) {
-    value = raw / 100;
-  } else if (raw is String) {
-    final cleaned = raw.replaceAll(RegExp(r'[^\d.]'), '');
-    value = double.tryParse(cleaned) != null
-        ? (double.parse(cleaned) / 100)
-        : 0.0;
-  } else {
-    value = 0.0;
+  String _formatAmount(dynamic raw) {
+    // Accepts int, double, or String
+    double value;
+
+    if (raw is int) {
+      value = raw / 100;
+    } else if (raw is double) {
+      value = raw / 100;
+    } else if (raw is String) {
+      // Remove commas or symbols if present, then parse
+      final cleaned = raw.replaceAll(RegExp(r'[^\d.]'), '');
+      value = double.tryParse(cleaned) != null
+          ? (double.parse(cleaned) / 100)
+          : 0.0;
+    } else {
+      value = 0.0;
+    }
+
+    // Show two decimal places
+    return value.toStringAsFixed(2);
   }
-  return value.toStringAsFixed(2);
+
 }

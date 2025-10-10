@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../app/models/terminal_model.dart';
 import '../screens/terminal/nassarawa_terminal.dart';
+import '../services/models/response_model/terminal_response.dart';
 
 class TerminalCard extends StatelessWidget {
-  final Terminal terminal;
+  final Terminals terminal;
 
   const TerminalCard({super.key, required this.terminal});
 
@@ -11,10 +11,16 @@ class TerminalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       hoverColor: Colors.white,
-      onTap: () =>  Navigator.push(context, MaterialPageRoute(builder: (context)=>
-          NassarawaTerminalScreen())),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NassarawaTerminalScreen(terminal: terminal),
+          ),
+        );
+      },
       child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -22,71 +28,69 @@ class TerminalCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: 8,
+                  height: 8,
                   decoration: BoxDecoration(
-                    color: terminal.status == 'ACTIVE'
+                    color: (terminal.isActive ?? false)
                         ? Colors.green
                         : Colors.red,
                     shape: BoxShape.circle,
                   ),
                 ),
-                 SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    terminal.status,
+                    (terminal.isActive ?? false) ? 'ACTIVE' : 'INACTIVE',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: terminal.status == 'ACTIVE'
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: (terminal.isActive ?? false)
                           ? Colors.green
                           : Colors.red,
                     ),
                   ),
                 ),
-                Row(
-                  children: [
-                    Text(
-                      terminal.number,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(onPressed: () {
-
-                    },
-                      icon: Icon(Icons.arrow_forward_ios),),
-                  ],
+                Text(
+                  terminal.terminalId ?? 'N/A',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
+                const Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
 
-            SizedBox(height: 8),
-            // Terminal name
+            const SizedBox(height: 8),
             Text(
-              terminal.name,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
+              terminal.terminalName ?? 'Unknown Terminal',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
               ),
             ),
-            SizedBox(height: 8),
-            // ID label and value
-            RichText(
-              text: TextSpan(
-                style: DefaultTextStyle.of(context).style,
-                children: [
-                  TextSpan(
-                    text: 'ID: ',
-                    style: TextStyle(color: Colors.grey,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  TextSpan(text: terminal.id, style: TextStyle(
-                    color: Colors.grey
-                  )),
-                ],
+            const SizedBox(height: 8),
+
+            Text(
+              'ID: ${terminal.id ?? "N/A"}',
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w400,
+                fontSize: 10,
               ),
             ),
+            const SizedBox(height: 4),
+
+            // Add more terminal information
+            if (terminal.virtualAccountNumber != null)
+              Text(
+                'Account: ${terminal.virtualAccountNumber!}',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 10,
+                ),
+              ),
           ],
         ),
       ),

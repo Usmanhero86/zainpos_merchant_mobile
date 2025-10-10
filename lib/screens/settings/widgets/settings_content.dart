@@ -62,8 +62,8 @@ class _SettingsContentState extends State<SettingsContent> {
           Text(
             'Settings',
             style: TextStyle(
-              fontSize: w * 0.05,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: h * 0.002),
@@ -110,8 +110,8 @@ class _SettingsContentState extends State<SettingsContent> {
               child: Text(
                 'Apply',
                 style: TextStyle(
-                  fontSize: w * 0.02,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),

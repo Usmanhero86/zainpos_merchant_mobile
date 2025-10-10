@@ -27,8 +27,8 @@ class ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final double paddingScale = size.width * 0.04; // dynamic padding
-    final double fontScale = size.width * 0.045;   // dynamic font size
+    final double paddingScale = size.width * 0.04;
+    final double fontScale = size.width * 0.045;
 
     return InkWell(
       onTap: onTap,
@@ -54,8 +54,8 @@ class ActionButton extends StatelessWidget {
               child: Text(
                 text,
                 style: TextStyle(
-                  fontSize: fontScale,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
                   color: Colors.grey[800],
                 ),
               ),
@@ -63,7 +63,7 @@ class ActionButton extends StatelessWidget {
             if (showTrailingIcon)
               Icon(
                 Icons.arrow_forward_ios,
-                size: fontScale * 0.9,
+                size: 14,
                 color: Colors.grey[400],
               ),
           ],

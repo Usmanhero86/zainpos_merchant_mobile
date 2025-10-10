@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../services/models/response_model/dispute_list_response.dart';
 
 class DisputeResolved extends StatelessWidget {
-  const DisputeResolved({super.key});
+  const DisputeResolved({super.key, required this.dispute});
+  final DisputeModel dispute;
 
   @override
   Widget build(BuildContext context) {
@@ -45,10 +47,10 @@ class DisputeResolved extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildRow('Actual Amount', '₦22,500.00', labelStyle, valueStyle),
-                    _buildRow('Settled Amount', '₦22,400.00', labelStyle, valueStyle),
-                    _buildRow('Charged Amount', '₦100.00', labelStyle, valueStyle),
-                    _buildRow('Terminal Name', 'Nassarawa Terminal', labelStyle, valueStyle),
+                    _buildRow('Actual Amount', '₦${dispute.txnAmount.toStringAsFixed(2)}', labelStyle, valueStyle),
+                    _buildRow('Settled Amount', '₦${dispute.txnAmount ?? "0.00"}', labelStyle, valueStyle),
+                    _buildRow('Charged Amount', '₦${dispute.txnAmount.toStringAsFixed(2) ?? "0.00"}', labelStyle, valueStyle),
+                    _buildRow('Terminal Name', dispute.terminalId, labelStyle, valueStyle),
 
                     const Divider(height: 32),
 
@@ -61,15 +63,17 @@ class DisputeResolved extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    _buildRow('Transaction Type', 'Card', labelStyle, valueStyle),
+                    _buildRow('Transaction Type', dispute.cardType, labelStyle, valueStyle),
 
                     Text('Status', style: labelStyle),
-                    Text('RESOLVED', style: valueStyle.copyWith(color: Colors.green)),
+                    Text(
+                      dispute.status.toUpperCase(),
+                      style: valueStyle.copyWith(color: _getStatusColor(dispute.status)),
+                    ),
 
                     const SizedBox(height: 12),
-                    _buildRow('Transaction Reference', 'REF-269528555', labelStyle, valueStyle),
-                    _buildRow('Date and time', '2024-02-16 - T15:02:47.26', labelStyle, valueStyle,),
-
+                    _buildRow('Transaction Reference', dispute.txnRrn, labelStyle, valueStyle),
+                    _buildRow('Date and time', _formatDateTime(dispute.txnDate), labelStyle, valueStyle),
                   ],
                 ),
               ),
@@ -80,7 +84,7 @@ class DisputeResolved extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String label, String value, TextStyle labelStyle, TextStyle valueStyle,) {
+  Widget _buildRow(String label, String value, TextStyle labelStyle, TextStyle valueStyle) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Column(
@@ -91,5 +95,26 @@ class DisputeResolved extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatDateTime(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} - T${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'RESOLVED':
+        return Colors.green;
+      case 'OPEN':
+        return Colors.blue;
+      case 'REFUNDED':
+        return Colors.brown;
+      case 'PENDING':
+        return Colors.orange;
+      case 'FAILED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }

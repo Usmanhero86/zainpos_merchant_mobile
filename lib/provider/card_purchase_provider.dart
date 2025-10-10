@@ -5,23 +5,51 @@ import '../services/api/api_service.dart';
 class CardPurchaseProvider with ChangeNotifier {
   final ApiService _api = ApiService();
 
-  bool isLoading = false;
-  String? errorMessage;
-  List<CardPurchaseItem> purchases = [];
+  bool _isLoading = false;
+  String? _errorMessage;
+  List<CardPurchaseItem> _purchases = [];
+
+  // Getters
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  List<CardPurchaseItem> get purchases => _purchases;
+
+  // Get purchase count for the chip
+  int get purchaseCount => _purchases.length;
 
   Future<void> loadCardPurchases() async {
-    isLoading = true;
-    errorMessage = null;
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
+      debugPrint("=== FETCHING CARD PURCHASE HISTORY ===");
       final response = await _api.fetchCardPurchaseHistory();
-      purchases = response.data;
+
+      debugPrint("Card Purchase Response - Data length: ${response.data.length}");
+
+      _purchases = response.data;
+
+      debugPrint("Card purchases loaded successfully: ${_purchases.length} items");
+
     } catch (e) {
-      errorMessage = e.toString();
+      _errorMessage = e.toString();
+      debugPrint("Card purchase fetch error: $e");
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
+      debugPrint("Card purchase loading completed. isLoading: $_isLoading, error: $_errorMessage, items: ${_purchases.length}");
     }
+  }
+
+  /// Refresh data
+  Future<void> refresh() async {
+    await loadCardPurchases();
+  }
+
+  /// Clear error
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 }

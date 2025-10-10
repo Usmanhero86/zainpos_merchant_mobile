@@ -46,7 +46,7 @@ class _LoanRequestScreenState extends State<LoanRequestScreen> {
           },
           title: 'Loan Request is being processed',
           subTitle:
-          'This will typically take 1-3 hours,\nwe will notify you when it has been processed',
+          'This will typically take 1-3 hours,\n we will notify you when it has been processed',
         );
       },
     );

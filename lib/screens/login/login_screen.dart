@@ -47,17 +47,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   "Login",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.07,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0052cc),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color:Colors.black,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.01),
                 Text(
                   "Sign in to your account on ZAINPOS",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    color: Colors.black54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.04),
@@ -66,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (loginProvider.errorMessage.isNotEmpty)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding:  EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.red[50],
                       borderRadius: BorderRadius.circular(8),
@@ -75,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.error_outline, color: Colors.red[600]),
-                        const SizedBox(width: 8),
+                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             loginProvider.errorMessage,
@@ -101,8 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: "Email",
-                    prefixIcon: const Icon(Icons.email_outlined),
+                    hintText: "Enter user email",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -128,8 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: "Password",
-                    prefixIcon: const Icon(Icons.lock_outline),
+                    hintText: "Enter Password",
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -162,107 +161,98 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.02),
 
-                // Forgot password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => _showForgotPasswordDialog(loginProvider),
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        color: const Color(0xFF0052cc),
-                      ),
-                    ),
-                  ),
-                ),
+
                 SizedBox(height: screenHeight * 0.02),
 
                 // Login Button
-                SizedBox(
-                  width: double.infinity,
-                  height: screenHeight * 0.07,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052cc),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: loginProvider.isLoading
-                        ? null
-                        : () => handleLogin(loginProvider),
-                    child: loginProvider.isLoading
-                        ? SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white,
+                Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: 320,
+                    height:54,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:  Color(0xFF0052cc),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
                         ),
                       ),
-                    )
-                        : Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: screenWidth * 0.045,
+                      onPressed: loginProvider.isLoading
+                          ? null
+                          : () => handleLogin(loginProvider),
+                      child: loginProvider.isLoading
+                          ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                          : Text(
+                        "Login",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
                 ),
 
-                SizedBox(height: screenHeight * 0.04),
-
-                // Divider
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey[300])),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        "OR",
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: screenWidth * 0.04,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.grey[300])),
-                  ],
-                ),
-
-                SizedBox(height: screenHeight * 0.04),
-
-                // Create Account Button
-                SizedBox(
-                  width: double.infinity,
-                  height: screenHeight * 0.07,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: const BorderSide(color: Color(0xFF0052cc)),
-                    ),
+                SizedBox(height: screenHeight * 0.008),
+                // Forgot password
+                Align(
+                  alignment: Alignment.center,
+                  child: TextButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, AppRouter.signup);
+                      Navigator.pushNamed(context, '/reset-password');
                     },
                     child: Text(
-                      "Create an Account",
+                      "Forgot Password?",
                       style: TextStyle(
-                        fontSize: screenWidth * 0.045,
-                        color: const Color(0xFF0052cc),
-                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14
+                      ),
+                    ),
+                  ),
+
+                ),
+                SizedBox(height: screenHeight * 0.2),
+
+                Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: 320,
+                    height: 54,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        side:  BorderSide(color: Color(0xFF0052cc)),
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRouter.signup);
+                      },
+                      child: Text(
+                        "Create an Account",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color:  Color(0xFF0052cc),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.03),
 
-                const CbnLicenseRow(),
+                 CbnLicenseRow(),
               ],
             ),
           ),
@@ -296,13 +286,13 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Reset Password"),
+        title:  Text("Reset Password"),
         content: Form(
           key: formKey,
           child: TextFormField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
+            decoration:  InputDecoration(
               labelText: "Enter your email",
               border: OutlineInputBorder(),
             ),
@@ -320,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child:  Text("Cancel"),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -331,14 +321,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (success && context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                     SnackBar(
                       content: Text('Password reset instructions sent to your email'),
                     ),
                   );
                 }
               }
             },
-            child: const Text("Send Instructions"),
+            child:  Text("Send Instructions"),
           ),
         ],
       ),
