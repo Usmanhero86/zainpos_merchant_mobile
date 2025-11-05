@@ -2,18 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zainpos_merchant_mobile/screens/settings/widgets/settings_content.dart';
 
 class SettingsScreen extends StatelessWidget {
-  final bool initialTransfersEnabled;
-  final bool initialBalanceEnabled;
-  final bool initialReprintEnabled;
-  final Function(Map<String, bool>)? onSettingsApplied;
-
-  const SettingsScreen({
-    super.key,
-    this.initialTransfersEnabled = true,
-    this.initialBalanceEnabled = true,
-    this.initialReprintEnabled = false,
-    this.onSettingsApplied,
-  });
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,17 +34,10 @@ class SettingsScreen extends StatelessWidget {
           ),
           SizedBox(height: h * 0.003),
           Expanded(
-            child: SettingsContent(
-              initialTransfersEnabled: initialTransfersEnabled,
-              initialBalanceEnabled: initialBalanceEnabled,
-              initialReprintEnabled: initialReprintEnabled,
-              onSettingsApplied: onSettingsApplied,
-            ),
+            child: SettingsContent(),
           ),
         ],
       ),
     );
   }
 }
-
-

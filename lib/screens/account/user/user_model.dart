@@ -7,6 +7,7 @@ class UserModel {
   final String publicId;
   final String role;
   final bool isDefaultPassword;
+  final String? accountNumber;
 
   UserModel({
     required this.userId,
@@ -17,6 +18,7 @@ class UserModel {
     required this.publicId,
     required this.role,
     required this.isDefaultPassword,
+    this.accountNumber,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class UserModel {
       publicId: json['public_id'] ?? '',
       role: json['role'] ?? '',
       isDefaultPassword: json['is_default_password'] ?? false,
+      accountNumber: json['account_number'],
     );
   }
 
@@ -42,6 +45,7 @@ class UserModel {
       'public_id': publicId,
       'role': role,
       'is_default_password': isDefaultPassword,
+      'account_number': accountNumber,
     };
   }
 

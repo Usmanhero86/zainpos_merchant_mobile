@@ -71,7 +71,7 @@ class BuildTransactionCard extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios, size: 16),
+                // Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
             SizedBox(height: scale * 0.4),

@@ -336,7 +336,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 } else if (_selectedFilter == 1) {
                   return const CardTransactionsScreen();
                 } else {
-                  return const PayoutTransactionsScreen();
+                  return const PayoutTransactionsScreen(filteredData: [],);
                 }
               },
             ),

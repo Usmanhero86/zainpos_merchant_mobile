@@ -1,4 +1,3 @@
-// lib/services/models/response_model/home_response.dart
 import 'package:flutter/material.dart';
 
 class HomeResponse {

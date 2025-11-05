@@ -105,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() => _currentIndex = index);
           }
         },
+        backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF0052cc),
         unselectedItemColor: const Color(0xFF777777),
         iconSize: screenWidth * 0.07,

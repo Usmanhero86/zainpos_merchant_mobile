@@ -3,10 +3,13 @@ import 'package:zainpos_merchant_mobile/screens/banks/empty_bank_selection.dart'
 import 'package:zainpos_merchant_mobile/screens/pin/pin_entry.dart';
 import '../../services/api/api_service.dart';
 import '../../services/models/response_model/bank_list_model.dart';
+import '../../services/models/response_model/terminal_response.dart';
 
 class TransferScreen extends StatefulWidget {
-  const TransferScreen({super.key, this.walletBalance});
+  const TransferScreen({super.key, this.walletBalance, required this.terminal});
+
   final double? walletBalance;
+  final Terminals terminal;
 
   @override
   State<TransferScreen> createState() => _TransferScreenState();
@@ -23,10 +26,25 @@ class _TransferScreenState extends State<TransferScreen> {
   bool _validatingAccount = false;
   bool _accountValidated = false;
 
+  // Get required data from the terminal
+  String get _sourceAccountNumber => widget.terminal.virtualAccountNumber ?? '';
+  String get _zainboxCode => widget.terminal.zainboxCode ?? '';
+  String get _terminalId => widget.terminal.terminalId ?? '';
+
   @override
   void initState() {
     super.initState();
     _accountNumberController.addListener(_validateAccountNumber);
+    _logTerminalInfo();
+  }
+
+  void _logTerminalInfo() {
+    debugPrint('=== TERMINAL INFO FOR TRANSFER ===');
+    debugPrint('Terminal Name: ${widget.terminal.terminalName}');
+    debugPrint('Terminal ID: $_terminalId');
+    debugPrint('Virtual Account: $_sourceAccountNumber');
+    debugPrint('Zainbox Code: $_zainboxCode');
+    debugPrint('Transfer Enabled: ${widget.terminal.transferEnabled}');
   }
 
   @override
@@ -71,7 +89,9 @@ class _TransferScreenState extends State<TransferScreen> {
 
     try {
       final name = await ApiService().resolveAccountEnquiry(
-        bankCode: _selectedBank!.code, accountNumber: accountNumber,);
+        bankCode: _selectedBank!.code,
+        accountNumber: accountNumber,
+      );
 
       if (name == null) {
         throw Exception('Account name resolution returned null');
@@ -98,12 +118,10 @@ class _TransferScreenState extends State<TransferScreen> {
       if (errorMessage.contains('not found') ||
           errorMessage.contains('invalid') ||
           errorMessage.contains('failed with code')) {
-        errorMessage = 'Account number not found in ${_selectedBank!
-            .name}. Please check the account number and try again.';
+        errorMessage = 'Account number not found in ${_selectedBank!.name}. Please check the account number and try again.';
       } else if (errorMessage.contains('network') ||
           errorMessage.contains('timeout')) {
-        errorMessage =
-        'Network error. Please check your connection and try again.';
+        errorMessage = 'Network error. Please check your connection and try again.';
       } else if (errorMessage.contains('Authentication failed')) {
         errorMessage = 'Session expired. Please login again.';
       }
@@ -137,6 +155,52 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   void _proceedToPinEntry() {
+    // Validate required API fields from terminal
+    if (_sourceAccountNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Virtual account number not found for this terminal'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (_zainboxCode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Zainbox code not found for this terminal'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (_terminalId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Terminal ID not found'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Check if transfer is enabled for this terminal
+    if (widget.terminal.transferEnabled == false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transfers are disabled for this terminal'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate() && _accountValidated) {
       final transferData = {
         'bank': _selectedBank!,
@@ -144,15 +208,28 @@ class _TransferScreenState extends State<TransferScreen> {
         'amount': _amountController.text.trim(),
         'narration': _narrationController.text.trim(),
         'accountName': _accountName,
+        // Add the required API fields from terminal
+        'sourceAccountNumber': _sourceAccountNumber,
+        'zainboxCode': _zainboxCode,
+        'terminalId': _terminalId,
       };
+
+      debugPrint('=== TRANSFER DATA ===');
+      debugPrint('Source Account: $_sourceAccountNumber');
+      debugPrint('Zainbox Code: $_zainboxCode');
+      debugPrint('Terminal ID: $_terminalId');
+      debugPrint('Amount: ${_amountController.text}');
+      debugPrint('Narration: ${_narrationController.text}');
+
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => PinEntryScreen(transferData: transferData),
+          builder: (_) => PinEntryScreen(
+            transferData: transferData,
+          ),
         ),
       );
-    } else
-    if (!_accountValidated && _accountNumberController.text.length == 10) {
+    } else if (!_accountValidated && _accountNumberController.text.length == 10) {
       // Show error if account is not validated
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -194,6 +271,23 @@ class _TransferScreenState extends State<TransferScreen> {
     return null;
   }
 
+  // NEW: Validation method for narration field
+  String? _validateNarrationField(String? v) {
+    if (v == null || v.isEmpty) {
+      return 'Please enter narration';
+    }
+    if (v.trim().isEmpty) {
+      return 'Narration cannot be empty';
+    }
+    if (v.length < 2) {
+      return 'Narration must be at least 2 characters';
+    }
+    if (v.length > 100) {
+      return 'Narration cannot exceed 100 characters';
+    }
+    return null;
+  }
+
   void _checkAmountAndShowSnackBar(String amount) {
     final amt = double.tryParse(amount);
     if (amt == null) return;
@@ -211,8 +305,8 @@ class _TransferScreenState extends State<TransferScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Insufficient balance. Available: ₦${widget.walletBalance!
-                  .toStringAsFixed(2)}'),
+              'Insufficient balance. Available: ₦${widget.walletBalance!.toStringAsFixed(2)}'
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),
         ),
@@ -220,339 +314,317 @@ class _TransferScreenState extends State<TransferScreen> {
     }
   }
 
-    @override
-    Widget build(BuildContext context) {
-      final screenWidth = MediaQuery
-          .of(context)
-          .size
-          .width;
-      final bottomInset = MediaQuery
-          .of(context)
-          .viewInsets
-          .bottom;
-      final isTablet = screenWidth > 600;
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isTablet = screenWidth > 600;
 
-      // Responsive sizing
-      final basePadding = isTablet ? 24.0 : 16.0;
-      final titleSize = isTablet ? 28.0 : 22.0;
-      final labelSize = isTablet ? 16.0 : 14.0;
-      final inputTextSize = isTablet ? 18.0 : 16.0;
-      final buttonHeight = isTablet ? 60.0 : 50.0;
-      final iconSize = isTablet ? 24.0 : 20.0;
+    // Responsive sizing
+    final basePadding = isTablet ? 24.0 : 16.0;
+    final titleSize = isTablet ? 28.0 : 22.0;
+    final labelSize = isTablet ? 16.0 : 14.0;
+    final inputTextSize = isTablet ? 18.0 : 16.0;
+    final buttonHeight = isTablet ? 60.0 : 50.0;
+    final iconSize = isTablet ? 24.0 : 20.0;
 
-      return Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          title: Text(
-            'Back to Terminal',
-            style: TextStyle(
-              fontWeight: FontWeight.w400,
-              fontSize: isTablet ? 16.0 : 14.0,
-              color: Colors.grey,
-            ),
+        title: Text(
+          'Back to Terminal',
+          style: TextStyle(
+            fontWeight: FontWeight.w400,
+            fontSize: isTablet ? 16.0 : 14.0,
+            color: Colors.grey,
           ),
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              size: iconSize,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          elevation: 0,
         ),
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: bottomInset),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: Padding(
-                      padding: EdgeInsets.all(basePadding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title
-                          Text(
-                            'Transfer',
-                            style: TextStyle(
-                              fontSize: titleSize,
-                              fontWeight: FontWeight.w600,
-                            ),
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            size: iconSize,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: bottomInset),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: EdgeInsets.all(basePadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          'Transfer',
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w600,
                           ),
-                          SizedBox(height: isTablet ? 32.0 : 24.0),
+                        ),
 
-                          // Form
-                          Expanded(
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // ---- Bank selection ----
-                                  InkWell(
-                                    onTap: _selectBank,
-                                    child: Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: basePadding,
-                                        vertical: isTablet ? 20.0 : 16.0,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey.shade400),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Text(
-                                                  _selectedBank?.name ??
-                                                      'Select Bank',
-                                                  style: TextStyle(
-                                                    fontSize: inputTextSize,
-                                                    color: _selectedBank == null
-                                                        ? Colors.grey
-                                                        : Colors.black,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                        SizedBox(height: isTablet ? 32.0 : 24.0),
+
+                        // Form
+                        Expanded(
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ---- Bank selection ----
+                                InkWell(
+                                  onTap: _selectBank,
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: basePadding,
+                                      vertical: isTablet ? 20.0 : 16.0,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.shade400),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                _selectedBank?.name ?? 'Select Bank',
+                                                style: TextStyle(
+                                                  fontSize: inputTextSize,
+                                                  color: _selectedBank == null
+                                                      ? Colors.grey
+                                                      : Colors.black,
+                                                  fontWeight: FontWeight.w500,
                                                 ),
-                                                if (_selectedBank != null)
-                                                  Text(
-                                                    _selectedBank!.code,
-                                                    style: TextStyle(
-                                                      fontSize: labelSize - 2,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.arrow_drop_down,
-                                            color: Colors.grey.shade600,
-                                            size: iconSize,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  if (_validateBankSelection() != null) ...[
-                                    SizedBox(height: isTablet ? 8.0 : 4.0),
-                                    Text(
-                                      _validateBankSelection()!,
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: labelSize,
-                                      ),
-                                    ),
-                                  ],
-                                  SizedBox(height: isTablet ? 24.0 : 16.0),
-
-                                  // ---- Account Number ----
-                                  TextFormField(
-                                    controller: _accountNumberController,
-                                    keyboardType: TextInputType.number,
-                                    maxLength: 10,
-                                    style: TextStyle(fontSize: inputTextSize),
-                                    decoration: InputDecoration(
-                                      labelText: 'Account Number',
-                                      labelStyle: TextStyle(fontSize: labelSize,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: basePadding,
-                                        vertical: isTablet ? 20.0 : 16.0,
-                                      ),
-                                      counterText: '',
-                                      suffixIcon: _validatingAccount
-                                          ? SizedBox(
-                                        width: iconSize,
-                                        height: iconSize,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
-                                      )
-                                          : _accountValidated
-                                          ? Icon(
-                                        Icons.verified,
-                                        color: Colors.green,
-                                        size: iconSize,
-                                      )
-                                          : null,
-                                      hintText: 'Enter 10-digit account number',
-                                    ),
-                                    validator: _validateAccountNumberField,
-                                  ),
-                                  SizedBox(height: isTablet ? 16.0 : 8.0),
-
-                                  // ---- Account Name Display ----
-                                  if (_accountName != null &&
-                                      _accountValidated) ...[
-                                    Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.all(basePadding),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.shade50,
-                                        border: Border.all(
-                                            color: Colors.green.shade200),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: Colors.green.shade600,
-                                            size: iconSize,
-                                          ),
-                                          SizedBox(
-                                              width: isTablet ? 12.0 : 8.0),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                Text(
-                                                  'Account Holder Name',
-                                                  style: TextStyle(
-                                                    fontSize: labelSize,
-                                                    color: Colors.grey.shade600,
-                                                    fontWeight: FontWeight.w400,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 4),
-                                                Text(
-                                                  _accountName!,
-                                                  style: TextStyle(
-                                                    color: Colors.grey.shade800,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: inputTextSize,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(height: isTablet ? 16.0 : 8.0),
-                                  ],
-
-                                  // ---- Amount ----
-                                  TextFormField(
-                                    controller: _amountController,
-                                    keyboardType: TextInputType
-                                        .numberWithOptions(decimal: true),
-                                    style: TextStyle(fontSize: inputTextSize),
-                                    decoration: InputDecoration(
-                                      labelText: 'Amount',
-                                      labelStyle: TextStyle(fontSize: labelSize,
-                                          color: Colors.grey),
-                                      prefixText: '₦ ',
-                                      prefixStyle: TextStyle(
-                                        fontSize: inputTextSize,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: basePadding,
-                                        vertical: isTablet ? 20.0 : 16.0,
-                                      ),
-                                      hintText: widget.walletBalance != null
-                                          ? 'Available: ₦${widget.walletBalance!
-                                          .toStringAsFixed(2)}'
-                                          : 'Enter amount',
-                                      hintStyle: TextStyle(
-                                        fontSize: labelSize - 2,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                    ),
-                                    onChanged: (value) {
-                                      // Real-time validation feedback
-                                      if (value.isNotEmpty) {
-                                        _checkAmountAndShowSnackBar(value);
-                                      }
-                                    },
-
-
-                                    validator: _validateAmountField,
-                                  ),
-                                  SizedBox(height: isTablet ? 24.0 : 16.0),
-
-                                  // ---- Narration ----
-                                  TextFormField(
-                                    controller: _narrationController,
-                                    style: TextStyle(fontSize: inputTextSize),
-                                    decoration: InputDecoration(
-                                      labelText: 'Enter narration',
-                                      labelStyle: TextStyle(fontSize: labelSize,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: basePadding,
-                                        vertical: isTablet ? 20.0 : 16.0,
-                                      ),
-                                    ),
-                                  ),
-
-                                  SizedBox(height: 15),
-
-                                  // ---- Send Button ----
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: SizedBox(
-                                      width: 320,
-                                      height: buttonHeight,
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: _accountValidated
-                                              ? const Color(0xFF0066FF)
-                                              : Colors.grey.shade400,
-                                          padding: EdgeInsets.symmetric(
-                                              vertical: isTablet ? 20.0 : 16.0),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                isTablet ? 16.0 : 50.0),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        onPressed: _accountValidated
-                                            ? _proceedToPinEntry
-                                            : null,
-                                        child: Text(
-                                          'Send',
-                                          style: TextStyle(
-                                            fontSize: isTablet ? 18.0 : 16.0,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                        Icon(
+                                          Icons.arrow_drop_down,
+                                          color: Colors.grey.shade600,
+                                          size: iconSize,
                                         ),
-                                      ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (_validateBankSelection() != null) ...[
+                                  SizedBox(height: isTablet ? 8.0 : 4.0),
+                                  Text(
+                                    _validateBankSelection()!,
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: labelSize,
                                     ),
                                   ),
                                 ],
-                              ),
+                                SizedBox(height: isTablet ? 24.0 : 16.0),
+
+                                // ---- Account Number ----
+                                TextFormField(
+                                  controller: _accountNumberController,
+                                  keyboardType: TextInputType.number,
+                                  maxLength: 10,
+                                  style: TextStyle(fontSize: inputTextSize),
+                                  decoration: InputDecoration(
+                                    labelText: 'Account Number',
+                                    labelStyle: TextStyle(fontSize: labelSize, color: Colors.grey),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: basePadding,
+                                      vertical: isTablet ? 20.0 : 16.0,
+                                    ),
+                                    counterText: '',
+                                    suffixIcon: _validatingAccount
+                                        ? SizedBox(
+                                      width: iconSize,
+                                      height: iconSize,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                        : _accountValidated
+                                        ? Icon(
+                                      Icons.verified,
+                                      color: Colors.green,
+                                      size: iconSize,
+                                    )
+                                        : null,
+                                    hintText: 'Enter 10-digit account number',
+                                  ),
+                                  validator: _validateAccountNumberField,
+                                ),
+                                SizedBox(height: isTablet ? 16.0 : 8.0),
+
+                                // ---- Account Name Display ----
+                                if (_accountName != null && _accountValidated) ...[
+                                  Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(basePadding),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      border: Border.all(color: Colors.green.shade200),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green.shade600,
+                                          size: iconSize,
+                                        ),
+                                        SizedBox(width: isTablet ? 12.0 : 8.0),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Account Holder Name',
+                                                style: TextStyle(
+                                                  fontSize: labelSize,
+                                                  color: Colors.grey.shade600,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                _accountName!,
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade800,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: inputTextSize,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: isTablet ? 16.0 : 8.0),
+                                ],
+
+                                // ---- Amount ----
+                                TextFormField(
+                                  controller: _amountController,
+                                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  style: TextStyle(fontSize: inputTextSize),
+                                  decoration: InputDecoration(
+                                    labelText: 'Amount',
+                                    labelStyle: TextStyle(fontSize: labelSize, color: Colors.grey),
+                                    prefixText: '₦ ',
+                                    prefixStyle: TextStyle(
+                                      fontSize: inputTextSize,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: basePadding,
+                                      vertical: isTablet ? 20.0 : 16.0,
+                                    ),
+                                    hintText: widget.walletBalance != null
+                                        ? 'Available: ₦${widget.walletBalance!.toStringAsFixed(2)}'
+                                        : 'Enter amount',
+                                    hintStyle: TextStyle(
+                                      fontSize: labelSize - 2,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    // Real-time validation feedback
+                                    if (value.isNotEmpty) {
+                                      _checkAmountAndShowSnackBar(value);
+                                    }
+                                  },
+                                  validator: _validateAmountField,
+                                ),
+                                SizedBox(height: isTablet ? 24.0 : 16.0),
+
+                                // ---- Narration (NOW COMPULSORY) ----
+                                TextFormField(
+                                  controller: _narrationController,
+                                  style: TextStyle(fontSize: inputTextSize),
+                                  decoration: InputDecoration(
+                                    labelText: 'Narration *', // Added asterisk to indicate required field
+                                    labelStyle: TextStyle(fontSize: labelSize, color: Colors.grey),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: basePadding,
+                                      vertical: isTablet ? 20.0 : 16.0,
+                                    ),
+                                    hintText: 'Enter transaction description',
+                                    hintStyle: TextStyle(
+                                      fontSize: labelSize - 2,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                  validator: _validateNarrationField, // Added validation
+                                ),
+
+                                SizedBox(height: 15),
+
+                                // ---- Send Button ----
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: SizedBox(
+                                    width: 320,
+                                    height: buttonHeight,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _accountValidated && widget.terminal.transferEnabled != false
+                                            ? const Color(0xFF0066FF)
+                                            : Colors.grey.shade400,
+                                        padding: EdgeInsets.symmetric(vertical: isTablet ? 20.0 : 16.0),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(isTablet ? 16.0 : 50.0),
+                                        ),
+                                      ),
+                                      onPressed: _accountValidated && widget.terminal.transferEnabled != false
+                                          ? _proceedToPinEntry
+                                          : null,
+                                      child: Text(
+                                        widget.terminal.transferEnabled == true
+                                            ? 'Send'
+                                            : 'Transfers Disabled',
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 18.0 : 16.0,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
-      );
-    }
+      ),
+    );
   }
+}

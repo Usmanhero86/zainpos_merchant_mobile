@@ -66,10 +66,6 @@ class _EmptyBankSelectionState extends State<EmptyBankSelection> {
     provider.clearSearch();
   }
 
-  int _calculateSuccessRate(String bankName) {
-    final hash = bankName.hashCode.abs();
-    return 70 + (hash % 30);
-  }
 
   @override
   Widget build(BuildContext context) {

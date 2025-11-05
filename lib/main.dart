@@ -16,7 +16,10 @@ import 'package:zainpos_merchant_mobile/provider/password_provider.dart';
 import 'package:zainpos_merchant_mobile/provider/payout_provider.dart';
 import 'package:zainpos_merchant_mobile/provider/pin_provider.dart';
 import 'package:zainpos_merchant_mobile/provider/reset_password_provider.dart';
+import 'package:zainpos_merchant_mobile/provider/serach_Filter_provider.dart';
+import 'package:zainpos_merchant_mobile/provider/settings_provider.dart';
 import 'package:zainpos_merchant_mobile/provider/terminal_provider.dart';
+import 'package:zainpos_merchant_mobile/provider/wallet_balance_provider.dart';
 import 'package:zainpos_merchant_mobile/services/api/api_service.dart';
 import 'app/routes/app_routes.dart';
 
@@ -43,10 +46,13 @@ class ZainPosApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DisputeProvider()),
         ChangeNotifierProvider(create: (context) => PinProvider()),
         ChangeNotifierProvider(create: (context) => CardPaymentProvider()),
+        ChangeNotifierProvider(create: (_) => WalletBalanceProvider()),
 
         // Terminal & Bank Management
         ChangeNotifierProvider(create: (_) => TerminalProvider(apiService: ApiService())),
         ChangeNotifierProvider(create: (_) => BankListProvider()),
+        ChangeNotifierProvider(create: (context) => SearchFilterProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
 
         // Home & Dashboard
         ChangeNotifierProvider(create: (_) => HomeProvider()),

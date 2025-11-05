@@ -6,6 +6,7 @@ import '../../screens/banks/model/bank_model.dart';
 import '../models/response_model/auth_response.dart';
 import '../models/response_model/bank_deposit_history_response.dart';
 import '../models/response_model/bank_list_model.dart';
+import '../models/response_model/base_response_model.dart';
 import '../models/response_model/card_purchase_history_response.dart';
 import '../models/response_model/card_success_rate_response.dart';
 import '../models/response_model/change_password_response_model.dart';
@@ -22,7 +23,6 @@ import '../models/response_model/wallet_balance_response.dart';
 
 class ApiService {
   ApiService._internal();
-
   static final ApiService _instance = ApiService._internal();
 
   factory ApiService() => _instance;
@@ -44,19 +44,45 @@ class ApiService {
       'password': password,
     });
 
+    debugPrint('=== LOGIN REQUEST ===');
+    debugPrint('URL: $url');
+    debugPrint('Body: $body');
+
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: body,
     );
 
+    debugPrint('=== LOGIN RESPONSE ===');
+    debugPrint('Status Code: ${response.statusCode}');
+    debugPrint('Response Body: ${response.body}');
+
     if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      return LoginResponse.fromJson(data);
+      try {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        debugPrint('Parsed Data: $data');
+
+        // Check for specific fields that might be missing
+        if (data['token'] == null) {
+          debugPrint('WARNING: Token is null in response');
+        }
+        if (data['user_id'] == null) {
+          debugPrint('WARNING: User ID is null in response');
+        }
+
+        return LoginResponse.fromJson(data);
+      } catch (e) {
+        debugPrint('JSON Parsing Error: $e');
+        throw Exception('Failed to parse login response: $e');
+      }
     } else {
-      throw Exception('Login failed: ${response.statusCode}');
+      final errorBody = response.body;
+      debugPrint('Login failed with status ${response.statusCode}: $errorBody');
+      throw Exception('Login failed: ${response.statusCode} - ${response.reasonPhrase}');
     }
   }
+
   //  Signup
   Future<AuthResponse> signup(String email, String password) {
     return simulate(() {
@@ -92,21 +118,49 @@ class ApiService {
   }
 
   // Bank And Card Purchase History Methods
-  Future<CardPurchaseHistoryResponse> fetchCardPurchaseHistory() async {
-    final uri = Uri.parse('$baseUrl/transactions/card-purchase-history');
-    final response = await http.get(uri, headers: {
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $authToken'
-    });
+  Future<CardPurchaseHistoryResponse> fetchCardPurchaseHistory({int page = 1, int limit = 25, Map<String, String>? queryParams,}) async {
+    try {
+      final Map<String, String> params = {
+        'page': page.toString(),
+        'limit': limit.toString(),
+        ...?queryParams,
+      };
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      return CardPurchaseHistoryResponse.fromJson(data);
-    } else {
-      throw Exception(
-          'Failed to load card purchase history: ${response.statusCode}');
+      final uri = Uri.parse('$baseUrl/transactions/card-purchase-history')
+          .replace(queryParameters: params);
+
+      debugPrint("=== CARD PURCHASE HISTORY API CALL ===");
+      debugPrint("URL: $uri");
+      debugPrint("Page: $page, Limit: $limit");
+
+      final response = await http.get(uri, headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $authToken'
+      });
+
+      debugPrint("Card Purchase Response - Status: ${response.statusCode}");
+      debugPrint("Card Purchase Response - Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        // Debug the actual response structure
+        debugPrint("=== CARD PURCHASE RESPONSE STRUCTURE ===");
+        debugPrint("data field: ${data['data']}");
+        debugPrint("data field type: ${data['data']?.runtimeType}");
+        debugPrint("pagination field: ${data['pagination']}");
+
+        return CardPurchaseHistoryResponse.fromJson(data);
+      } else {
+        throw Exception(
+            'Failed to load card purchase history: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Card Purchase History API Error: $e");
+      rethrow;
     }
   }
+
 
   Future<PayoutResponseModel> fetchPayoutHistory() async {
     final uri = Uri.parse('$baseUrl/transactions/payouts-history');
@@ -344,7 +398,7 @@ class ApiService {
     }
   }
 
-  Future<ResendOtpResponse> resendOtp({required String email, required String secretKey,}) async {
+  Future<ResendOtpResponse> resendOtp({required String email, required String secretKey}) async {
     final url = Uri.parse('$baseUrl/auth/resend-otp');
     final body = jsonEncode({
       'email': email,
@@ -388,33 +442,33 @@ class ApiService {
         // Check if the response has the expected structure
         if (responseData.containsKey('balance_amount')) {
           return WalletBalanceResponse(
-            status: true, // Since we got a 200 response with balance data
+            status: true,
             message: 'Balance retrieved successfully',
             data: WalletBalanceData(
               accountName: responseData['account_name'] ?? '',
               accountNumber: responseData['account_number'] ?? accountNumber,
               balanceAmount: _parseBalance(responseData['balance_amount']),
               bankName: responseData['bank_name'] ?? '',
-              currency: 'NGN',
+              currency: responseData['currency'] ?? 'NGN',
             ),
           );
         } else {
-          // If the structure is different, try to parse it
+          // If the structure is different, try to parse it as the standard response
           return WalletBalanceResponse.fromJson(responseData);
         }
+      } else if (response.statusCode == 404) {
+        return WalletBalanceResponse(
+          status: false,
+          message: 'Account not found',
+          data: null,
+        );
       } else {
         debugPrint("API Error - Status: ${response.statusCode}");
         debugPrint("Error body: ${response.body}");
         return WalletBalanceResponse(
           status: false,
           message: 'Failed to load balance: ${response.statusCode}',
-          data: WalletBalanceData(
-            accountName: '',
-            accountNumber: accountNumber,
-            balanceAmount: 0.0,
-            bankName: '',
-            currency: 'NGN',
-          ),
+          data: null,
         );
       }
     } catch (e) {
@@ -422,13 +476,7 @@ class ApiService {
       return WalletBalanceResponse(
         status: false,
         message: 'Network error: $e',
-        data: WalletBalanceData(
-          accountName: '',
-          accountNumber: accountNumber,
-          balanceAmount: 0.0,
-          bankName: '',
-          currency: 'NGN',
-        ),
+        data: null,
       );
     }
   }
@@ -562,18 +610,20 @@ class ApiService {
 
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
-      // Always return TransferResponse, it will handle both success and error
-      final transferResponse = TransferResponse.fromJson(responseData);
+      // ADD DETAILED DEBUGGING TO SEE ACTUAL RESPONSE STRUCTURE
+      debugPrint("=== RAW API RESPONSE ANALYSIS ===");
+      debugPrint("Success field type: ${responseData['Success']?.runtimeType}");
+      debugPrint("Success field value: ${responseData['Success']}");
+      debugPrint("status field type: ${responseData['status']?.runtimeType}");
+      debugPrint("status field value: ${responseData['status']}");
+      debugPrint("isSuccess field type: ${responseData['isSuccess']?.runtimeType}");
+      debugPrint("isSuccess field value: ${responseData['isSuccess']}");
+      debugPrint("error field type: ${responseData['error']?.runtimeType}");
+      debugPrint("error field value: ${responseData['error']}");
+      debugPrint("message field: ${responseData['message']}");
+      debugPrint("code field: ${responseData['code']}");
 
-      // Additional check for HTTP status codes
-      if (response.statusCode != 200) {
-        return TransferResponse(
-          isSuccess: false,
-          message: responseData['message'] ?? 'Transfer failed with status: ${response.statusCode}',
-          error: true,
-          errorType: 'HTTP_${response.statusCode}',
-        );
-      }
+      final transferResponse = TransferResponse.fromJson(responseData);
 
       return transferResponse;
 
@@ -583,13 +633,13 @@ class ApiService {
       // Return an error response for network/exceptions
       return TransferResponse(
         isSuccess: false,
+        success: false,
         message: 'Network error: ${e.toString().replaceAll('Exception: ', '')}',
         error: true,
         errorType: 'NetworkError',
       );
     }
   }
-
   // update transaction pin
   Future<UpdatePinResponse> updateTransactionPin({required String currentPin, required String newPin, required String confirmPin,}) async {
     try {
@@ -713,97 +763,44 @@ class ApiService {
     }
   }
 
-// Mock API for development (fallback)
-  Future<CardSuccessRateResponse> fetchCardSuccessRatesMock() async {
-    await Future.delayed(const Duration(seconds: 2));
+  Future<BaseResponse> verifyTransactionPin(String pin) async {
+  try {
+  // Simulate API call
+  final response = await http.post(
+  Uri.parse('$baseUrl/verify-pin'),
+  body: jsonEncode({'pin': pin}),
+  );
 
-    return CardSuccessRateResponse(
-      status: true,
-      message: 'Success rates loaded successfully',
-      data: [
-        BankSuccessRate(
-          bank: 'Access Bank',
-          bankCode: '044',
-          mcard: 97,
-          verve: 94,
-          visa: 95,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Diamond Bank',
-          bankCode: '063',
-          mcard: 97,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Fidelity Bank',
-          bankCode: '070',
-          mcard: 97,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'First Bank of Nigeria',
-          bankCode: '011',
-          mcard: 97,
-          verve: 50,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Guaranty Trust Bank',
-          bankCode: '058',
-          mcard: 0,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Jaiz Bank',
-          bankCode: '301',
-          mcard: 97,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Keystone Bank',
-          bankCode: '082',
-          mcard: 84,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Kuda Bank',
-          bankCode: '50211',
-          mcard: 97,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'Ecobank Nigeria',
-          bankCode: '050',
-          mcard: 97,
-          verve: 97,
-          visa: 97,
-          lastUpdated: DateTime.now(),
-        ),
-        BankSuccessRate(
-          bank: 'First City Monument Bank',
-          bankCode: '214',
-          mcard: 20,
-          verve: 17,
-          visa: 32,
-          lastUpdated: DateTime.now(),
-        ),
-      ],
-    );
+  final responseData = jsonDecode(response.body);
+
+  return ApiResponseHandler.handleHttpResponse(responseData, response.statusCode);
+
+  } catch (e) {
+  return ErrorResponse(
+  error: 'NETWORK_ERROR',
+  message: 'Failed to connect to server: $e',
+  status: 'ERROR',
+  );
+  }
   }
 
+  Future<BaseResponse> processPayment({required String pin, required double amount,}) async {
+  final pinVerification = await verifyTransactionPin(pin);
 
-}
+  if (pinVerification is ErrorResponse) {
+  return pinVerification;
+  }
+
+  return SuccessResponse(
+  message: 'Payment processed successfully',
+  data: {
+  'transactionId': 'TXN_123456',
+  'amount': amount,
+  'timestamp': DateTime.now().toIso8601String(),
+  },
+  );
+  }
+
+  
+  }
+
