@@ -1,7 +1,3 @@
-// models/response_model/card_success_rate_response.dart
-
-import 'dart:convert';
-
 import '../../../screens/banks/model/bank_model.dart';
 
 class CardSuccessRateResponse {

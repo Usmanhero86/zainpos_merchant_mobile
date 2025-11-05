@@ -25,8 +25,15 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   bool _transferCompleted = false;
   TransferResponse? _transferResponse;
 
-  // Mock PIN configuration
-  final bool _useMockPin = false;
+  // Build mode detection
+  bool get isDebugMode {
+    bool isDebug = false;
+    assert(() {
+      isDebug = true;
+      return true;
+    }());
+    return isDebug;
+  }
 
   void onNumberPressed(String number) {
     if (_isProcessing || _transferCompleted) return;
@@ -58,19 +65,18 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
   void validatePin() async {
     if (_enteredPin.length != 4) return;
 
+    // Clear any existing states (especially important in release mode)
+    if (!isDebugMode) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+    }
+
     setState(() {
       _isProcessing = true;
       _showError = false;
     });
 
     try {
-      final pinProvider = Provider.of<PinProvider>(context, listen: false);
-
-      if (pinProvider.useMockPin) {
-        await processMockTransfer(pinProvider);
-      } else {
-        await processRealTransfer();
-      }
+      await processRealTransfer();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -79,55 +85,8 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
           _enteredPin = '';
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('PIN validation failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        _safeShowSnackBar('PIN validation failed: ${e.toString()}', Colors.red);
       }
-    }
-  }
-
-  Future<void> processMockTransfer(PinProvider pinProvider) async {
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    // Use dynamic mock PIN from provider
-    if (pinProvider.validateMockPin(_enteredPin)) {
-      // Successful transfer
-      setState(() {
-        _transferCompleted = true;
-        _isProcessing = false;
-      });
-
-      // Create mock successful response
-      _transferResponse = TransferResponse(
-        isSuccess: true,
-        message: 'Transfer successful (Mock)',
-        reference: generateTransactionReference(),
-        error: false,
-      );
-
-      showTransferSuccessScreen();
-    } else {
-      // Failed transfer - wrong PIN
-      setState(() {
-        _showError = true;
-        _isProcessing = false;
-        _enteredPin = '';
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid PIN. Please try again.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
     }
   }
 
@@ -143,12 +102,30 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       final accountName = widget.transferData['accountName'] ?? '';
       final amount = widget.transferData['amount'] ?? '0';
       final narration = widget.transferData['narration'] ?? '';
+      final sourceAccountNumber = widget.transferData['sourceAccountNumber'] ?? '';
+      final zainboxCode = widget.transferData['zainboxCode'] ?? '';
+      final terminalId = widget.transferData['terminalId'] ?? '';
 
       debugPrint('=== REAL TRANSFER INITIATION ===');
       debugPrint('Destination: $accountNumber ($accountName)');
       debugPrint('Bank: ${bank.name} (${bank.code})');
       debugPrint('Amount: $amount');
       debugPrint('Narration: $narration');
+      debugPrint('Source Account: $sourceAccountNumber');
+      debugPrint('Zainbox Code: $zainboxCode');
+      debugPrint('Terminal ID: $terminalId');
+      debugPrint('PIN Length: ${_enteredPin.length}');
+
+      // Validate required fields
+      if (sourceAccountNumber.isEmpty) {
+        throw Exception('Source account number is required');
+      }
+      if (zainboxCode.isEmpty) {
+        throw Exception('Zainbox code is required');
+      }
+      if (terminalId.isEmpty) {
+        throw Exception('Terminal ID is required');
+      }
 
       // Call the real API with the entered PIN
       final response = await ApiService().initiateFundTransfer(
@@ -157,78 +134,85 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
         destinationBankCode: bank.code,
         destinationBankName: bank.name,
         amount: amount,
-        sourceAccountNumber: '4423190554', // TODO: Make this dynamic
-        zainboxCode: '34447_hAkmg9YimuL28OgTdtEr', // TODO: Make this dynamic
+        sourceAccountNumber: sourceAccountNumber,
+        zainboxCode: zainboxCode,
         narration: narration,
-        terminalId: '2070GPQ21', // TODO: Make this dynamic
+        terminalId: terminalId,
         pin: _enteredPin,
       );
 
       if (!mounted) return;
 
+      debugPrint('=== TRANSFER RESPONSE ANALYSIS ===');
+      debugPrint('Response isSuccess: ${response.isSuccess}');
+      debugPrint('Response success: ${response.success}');
+      debugPrint('Response error: ${response.error}');
+      debugPrint('Response hasError: ${response.hasError}');
+      debugPrint('Response message: ${response.message}');
+      debugPrint('Response displayMessage: ${response.displayMessage}');
+      debugPrint('Is Insufficient Funds: ${response.isInsufficientFunds}');
+      debugPrint('Is Invalid PIN: ${response.isInvalidPin}');
+
+      // ROBUST SUCCESS CONDITION - Check multiple indicators
+      final bool isSuccessful = response.isSuccess &&
+          response.success &&
+          !response.error &&
+          !response.hasError;
+
+      debugPrint('Final success determination: $isSuccessful');
+
+      // Use a small delay to ensure state is properly updated
+      await Future.delayed(Duration(milliseconds: 100));
+
+      if (!mounted) return;
+
       setState(() {
         _transferResponse = response;
-        _transferCompleted = true;
         _isProcessing = false;
       });
 
-      if (response.isSuccess && response.Success) {
-        debugPrint('=== TRANSFER SUCCESSFUL ===');
-        debugPrint('Reference: ${response.reference}');
-        debugPrint('Message: ${response.message}');
+      // USE THE ROBUST SUCCESS CONDITION
+      if (isSuccessful) {
+        debugPrint('=== TRANSFER SUCCESSFUL - SHOWING SUCCESS SCREEN ===');
 
-        showTransferSuccessScreen();
+        // Add another small delay before showing success screen
+        await Future.delayed(Duration(milliseconds: 50));
+
+        if (!mounted) return;
+
+        setState(() {
+          _transferCompleted = true;
+        });
+
+        _showTransferSuccessScreen();
       } else {
-        // Handle specific error types
-        debugPrint('=== TRANSFER FAILED ===');
-        debugPrint('Error Type: ${response.errorType}');
-        debugPrint('Message: ${response.message}');
-        debugPrint('Code: ${response.code}');
+        debugPrint('=== TRANSFER FAILED - SHOWING ERROR ===');
 
+        // Clear any existing snackbars first
+        ScaffoldMessenger.of(context).clearSnackBars();
+
+        // Add delay before showing error
+        await Future.delayed(Duration(milliseconds: 50));
+
+        if (!mounted) return;
+
+        setState(() {
+          _isProcessing = false;
+          _enteredPin = '';
+        });
+
+        // Handle specific error types
         if (response.isInvalidPin) {
-          // Specific handling for invalid PIN
           setState(() {
             _showError = true;
-            _isProcessing = false;
-            _enteredPin = ''; // Clear PIN for security
           });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid PIN. Please try again.'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        } else if (response.isInsufficientFunds) {
-          // Handle insufficient funds
-          setState(() {
-            _isProcessing = false;
-            _enteredPin = '';
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.displayMessage),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        } else {
-          // General error handling
-          setState(() {
-            _isProcessing = false;
-            _enteredPin = '';
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.displayMessage),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
-          );
         }
+
+        // Show error snackbar using safe method
+        _safeShowSnackBar(
+          response.displayMessage,
+          response.isInsufficientFunds ? Colors.orange : Colors.red,
+        );
       }
 
     } catch (e) {
@@ -237,77 +221,12 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
       debugPrint('=== TRANSFER ERROR ===');
       debugPrint('Exception: $e');
 
-      setState(() {
-        _isProcessing = false;
-        _showError = true;
-        _enteredPin = '';
-      });
+      // Clear existing snackbars
+      ScaffoldMessenger.of(context).clearSnackBars();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Transfer failed: ${e.toString().replaceAll('Exception: ', '')}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    }
-  }
+      // Add delay before showing error
+      await Future.delayed(Duration(milliseconds: 50));
 
-  Future<void> processTransfer() async {
-    try {
-      setState(() {
-        _isProcessing = true;
-      });
-
-      // Get the transfer data
-      final bank = widget.transferData['bank'];
-      final accountNumber = widget.transferData['accountNumber'] ?? '';
-      final accountName = widget.transferData['accountName'] ?? '';
-      final amount = widget.transferData['amount'] ?? '0';
-      final narration = widget.transferData['narration'] ?? '';
-
-      // Call the real API
-      final response = await ApiService().initiateFundTransfer(
-        destinationAccountNumber: accountNumber,
-        destinationAccountName: accountName,
-        destinationBankCode: bank.code,
-        destinationBankName: bank.name,
-        amount: amount,
-        sourceAccountNumber: '4423190554', // You need to get this from your app state
-        zainboxCode: '34447_hAkmg9YimuL28OgTdtEr', // You need to get this from your app state
-        narration: narration,
-        terminalId: '2070GPQ21', // You need to get this from your terminal selection
-        pin: _enteredPin,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _transferResponse = response;
-        _transferCompleted = true;
-        _isProcessing = false;
-      });
-
-      if (response.Success) {
-        showTransferSuccessScreen();
-      } else {
-        // Show error from API response
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.displayMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-
-        // Reset PIN for security
-        setState(() {
-          _enteredPin = '';
-          _isProcessing = false;
-        });
-      }
-
-    } catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -316,48 +235,146 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
         _enteredPin = '';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Transfer failed: ${e.toString().replaceAll('Exception: ', '')}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
+      _safeShowSnackBar(
+        'Transfer failed: ${e.toString().replaceAll('Exception: ', '')}',
+        Colors.red,
       );
     }
   }
 
-  void showTransferSuccessScreen() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return TransferSuccessWidget(
-          amount: double.parse(widget.transferData['amount'] ?? '0'),
-          recipient: widget.transferData['accountName'] ?? 'Recipient',
-          bankName: widget.transferData['bank']?.name ?? 'Bank',
-          accountNumber: widget.transferData['accountNumber'] ?? '',
-          transactionReference: _transferResponse?.reference ?? generateTransactionReference(),
-          narration: widget.transferData['narration'] ?? '',
-          transactionDate: DateTime.now(),
-          onClose: () {
-            Navigator.pop(context); // Close success screen
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  (route) => false,
+  // Safe method to show snackbar without conflicts
+  void _safeShowSnackBar(String message, Color backgroundColor) {
+    // Clear any existing snackbars
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // Small delay to ensure UI is ready (especially in release mode)
+    Future.delayed(Duration(milliseconds: isDebugMode ? 50 : 100), () {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: backgroundColor,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    });
+  }
+
+  void _showTransferSuccessScreen() {
+    debugPrint('=== SHOWING SUCCESS SCREEN ===');
+
+    // Clear any existing snackbars first (critical for release mode)
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    if (!mounted) {
+      debugPrint('=== CONTEXT NOT MOUNTED - CANNOT SHOW SUCCESS SCREEN ===');
+      return;
+    }
+
+    // Use a longer delay to ensure everything is settled (especially in release mode)
+    Future.delayed(Duration(milliseconds: isDebugMode ? 100 : 200), () {
+      if (!mounted) return;
+
+      try {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          isDismissible: false,
+          enableDrag: false,
+          builder: (BuildContext context) {
+            debugPrint('=== BUILDING SUCCESS WIDGET ===');
+
+            // Extract data with null checks
+            final bank = widget.transferData['bank'];
+
+            // Use the amount from transfer data (it's in kobo, so divide by 100)
+            final originalAmount = double.tryParse(widget.transferData['amount']?.toString() ?? '0') ?? 0;
+            final amountInNaira = originalAmount / 100; // Convert from kobo to naira
+
+            final accountName = widget.transferData['accountName']?.toString() ?? 'Recipient';
+            final accountNumber = widget.transferData['accountNumber']?.toString() ?? '';
+            final narration = widget.transferData['narration']?.toString() ?? '';
+
+            debugPrint('Amount details:');
+            debugPrint('  Original amount: $originalAmount');
+            debugPrint('  Amount in Naira: $amountInNaira');
+
+            return TransferSuccessWidget(
+              amount: amountInNaira, // Use the converted amount
+              recipient: accountName,
+              bankName: bank?.name?.toString() ?? 'Bank',
+              accountNumber: accountNumber,
+              transactionReference: _transferResponse?.reference ?? generateTransactionReference(),
+              narration: narration,
+              transactionDate: DateTime.now(),
+              onClose: () {
+                debugPrint('=== CLOSING SUCCESS SCREEN ===');
+                // Navigate back to home
+                Navigator.of(context).pop(); // Close success screen
+                Navigator.of(context).pop(); // Close PIN screen
+              },
+              onShareReceipt: () {
+                debugPrint('=== SHARE RECEIPT ===');
+                // Add your share functionality here
+              },
+              onViewTransaction: () {
+                debugPrint('=== VIEW TRANSACTION DETAILS ===');
+                // Add your view transaction functionality here
+              },
+              title: 'Transfer Successful!',
+              subTitle: 'You have successfully transferred\n₦${amountInNaira.toStringAsFixed(2)} to $accountName',
+              showTransactionDetails: true,
+              showActionButtons: true,
             );
           },
-          title: 'Transfer Successful',
-          subTitle: 'You have successfully sent \n${widget.transferData['amount']} to ${widget.transferData['accountName']}',
-          showTransactionDetails: true,
-          showActionButtons: true,
-        );
-      },
+        ).then((value) {
+          debugPrint('=== SUCCESS SCREEN CLOSED ===');
+        }).catchError((error) {
+          debugPrint('=== ERROR SHOWING SUCCESS SCREEN: $error ===');
+          // Fallback to dialog
+          _showFallbackSuccessDialog();
+        });
+      } catch (e) {
+        debugPrint('=== ERROR SHOWING SUCCESS SCREEN: $e ===');
+        _showFallbackSuccessDialog();
+      }
+    });
+  }
+
+  void _showFallbackSuccessDialog() {
+    if (!mounted) return;
+
+    // Clear any existing snackbars before showing dialog
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Transfer Successful'),
+        content: Text('Your transfer was completed successfully.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close PIN screen
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
   void resetScreen() {
+    if (!mounted) return;
+
+    // Clear all snackbars first
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // Reset all states
     setState(() {
       _enteredPin = '';
       _isProcessing = false;
@@ -386,7 +403,6 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
     final Size size = MediaQuery.of(context).size;
     final double w = size.width;
     final double h = size.height;
-
     final double dotSize = w * 0.12;
     final double dotSpacing = w * 0.02;
     final double keypadSpacing = h * 0.025;
@@ -410,12 +426,13 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
               children: [
                 if (!_transferCompleted) ...[
                   Text(
-                    _useMockPin ? 'Enter Mock PIN' : 'Enter your PIN',
+                    'Enter your PIN',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
                     ),
-                  ),                  SizedBox(height: h * 0.01),
+                  ),
+                  SizedBox(height: h * 0.01),
                   Text(
                     'Enter your PIN to complete this transaction',
                     style: TextStyle(
@@ -424,9 +441,6 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                       color: Colors.grey,
                     ),
                   ),
-                  if (_useMockPin) ...[
-                    SizedBox(height: h * 0.01),
-                  ],
                 ],
 
                 SizedBox(height: h * 0.05),
@@ -495,7 +509,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                       ),
                       SizedBox(height: h * 0.02),
                       Text(
-                        _useMockPin ? 'Processing Mock Transfer...' : 'Processing Transfer...',
+                        'Processing Transfer...',
                         style: TextStyle(
                           fontSize: w * 0.04,
                           color: Colors.grey,
@@ -506,7 +520,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                   ),
                 ],
 
-                if (!_transferCompleted ) ...[
+                if (!_transferCompleted && !_isProcessing) ...[
                   Opacity(
                     opacity: _isProcessing ? 0.5 : 1.0,
                     child: AbsorbPointer(
@@ -554,15 +568,18 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                                     color: Colors.grey,
                                   ),
                                 ),
-                              ),                              NumberButton(number: '0', onPressed: onNumberPressed, size: w * 0.18),
-                              BackspaceButton(onPressed: onBackspacePressed, size: w * 0.18),                            ],
+                              ),
+                              NumberButton(number: '0', onPressed: onNumberPressed, size: w * 0.18),
+                              BackspaceButton(onPressed: onBackspacePressed, size: w * 0.18),
+                            ],
                           ),
                         ],
                       ),
                     ),
                   ),
+
                   // Forgot PIN option
-                  if (!_transferCompleted ) ...[
+                  if (!_transferCompleted) ...[
                     SizedBox(height: h * 0.04),
                     TextButton(
                       onPressed: () {

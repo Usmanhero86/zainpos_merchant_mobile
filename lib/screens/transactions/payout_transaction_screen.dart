@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:zainpos_merchant_mobile/provider/payout_provider.dart';
 import 'package:zainpos_merchant_mobile/screens/transactions/transaction_details_screen.dart';
 
+import '../../services/models/response_model/payout_response_model.dart';
+
 class PayoutTransactionsScreen extends StatefulWidget {
-  const PayoutTransactionsScreen({super.key});
+  final List<PayoutTransferData> filteredData;
+
+  const PayoutTransactionsScreen({super.key, required this.filteredData});
 
   @override
   State<PayoutTransactionsScreen> createState() =>

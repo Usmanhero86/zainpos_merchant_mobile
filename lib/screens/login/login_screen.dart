@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.error_outline, color: Colors.red[600]),
-                         SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             loginProvider.errorMessage,
@@ -162,8 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: screenHeight * 0.02),
 
 
-                SizedBox(height: screenHeight * 0.02),
-
                 // Login Button
                 Align(
                   alignment: Alignment.center,
@@ -214,9 +212,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       "Forgot Password?",
                       style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 14
+                          color: Colors.black,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 14
                       ),
                     ),
                   ),
@@ -252,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.03),
 
-                 CbnLicenseRow(),
+                CbnLicenseRow(),
               ],
             ),
           ),
@@ -277,61 +275,5 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, AppRouter.home);
       }
     }
-  }
-
-  void _showForgotPasswordDialog(LoginProvider loginProvider) {
-    final emailController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title:  Text("Reset Password"),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration:  InputDecoration(
-              labelText: "Enter your email",
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              if (!value.contains('@')) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child:  Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                final success = await loginProvider.resetPassword(
-                  emailController.text.trim(),
-                );
-                if (success && context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                     SnackBar(
-                      content: Text('Password reset instructions sent to your email'),
-                    ),
-                  );
-                }
-              }
-            },
-            child:  Text("Send Instructions"),
-          ),
-        ],
-      ),
-    );
   }
 }

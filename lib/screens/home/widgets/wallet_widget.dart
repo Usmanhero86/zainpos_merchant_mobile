@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../provider/home_provider.dart';
+import '../../../provider/login_provider.dart';
 
 class WalletBalanceCard extends StatefulWidget {
-  const WalletBalanceCard({super.key});
+  final String? accountNumber;
+
+  const WalletBalanceCard({super.key, this.accountNumber});
 
   @override
   State<WalletBalanceCard> createState() => _WalletBalanceCardState();
@@ -11,6 +14,31 @@ class WalletBalanceCard extends StatefulWidget {
 
 class _WalletBalanceCardState extends State<WalletBalanceCard> {
   bool _obscureBalance = true;
+  bool _initialLoad = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch wallet balance when the widget is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchWalletBalance();
+    });
+  }
+
+  void _fetchWalletBalance() {
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final accountNumber = widget.accountNumber;
+
+    if (accountNumber != null && accountNumber.isNotEmpty) {
+      homeProvider.fetchWalletBalance(accountNumber).then((_) {
+        if (_initialLoad) {
+          setState(() {
+            _initialLoad = false;
+          });
+        }
+      });
+    }
+  }
 
   void _toggleBalanceVisibility() {
     setState(() {
@@ -22,15 +50,16 @@ class _WalletBalanceCardState extends State<WalletBalanceCard> {
     if (_obscureBalance) {
       return '••••••';
     }
-    // Divide by 100 and format to 2 decimal places
     final actualBalance = totalBalance / 100;
-    return 'N${actualBalance.toStringAsFixed(2)}';
+    return '₦${actualBalance.toStringAsFixed(2)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final homeProvider = Provider.of<HomeProvider>(context);
+    final homeProvider = Provider.of<HomeProvider>(context, listen: true);
+    final loginProvider = Provider.of<LoginProvider>(context);
     final totalBalance = homeProvider.totalBalance;
+    final user = loginProvider.currentUser;
 
     return Card(
       color: Colors.blue,
@@ -40,50 +69,64 @@ class _WalletBalanceCardState extends State<WalletBalanceCard> {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            Image(
-              image: const AssetImage('assets/logos/FeaturedIcon5.png'),
-              height: 38,
-              width: 38,
+            //  User Initials or Logo
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: Colors.white,
+              child: Text(
+                user?.initials ?? 'U',
+                style: const TextStyle(
+                  color: Colors.blue,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             const SizedBox(width: 16),
+
+            // 🟦 Wallet and Name Section
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+
+
+                  const Text(
                     'Wallet Balance',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white,
+                      color: Colors.white70,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  Text(
-                    _getDisplayBalance(totalBalance),
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+
+
+                    Text(
+                      _getDisplayBalance(totalBalance),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),
+
+            // Toggle visibility button
             IconButton(
               style: IconButton.styleFrom(
                 backgroundColor: Colors.white,
-                iconSize: 30),
+              ),
               icon: Icon(
-                _obscureBalance
-                    ? Icons.visibility_off
-                    : Icons.visibility,
+                _obscureBalance ? Icons.visibility_off : Icons.visibility,
                 color: Colors.blue,
               ),
               onPressed: _toggleBalanceVisibility,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
-              iconSize:20,
+              iconSize: 20,
             ),
           ],
         ),

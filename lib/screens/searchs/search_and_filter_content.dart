@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:zainpos_merchant_mobile/screens/searchs/widgets/date_filter.dart';
-
+import '../../provider/serach_Filter_provider.dart';
 import '../../widgets/build_filter_dropdown.dart';
 
 class SearchAndFilterContent extends StatefulWidget {
@@ -9,12 +10,9 @@ class SearchAndFilterContent extends StatefulWidget {
   @override
   State<SearchAndFilterContent> createState() => _SearchAndFilterContentState();
 }
+
 class _SearchAndFilterContentState extends State<SearchAndFilterContent> {
   final TextEditingController _searchController = TextEditingController();
-  String? _selectedTrxnType;
-  String? _selectedPeriod;
-  String? _selectedDateFilter;
-  DateTime? _selectedDate;
 
   // Filter options
   final List<String> trxnTypes = [
@@ -47,53 +45,84 @@ class _SearchAndFilterContentState extends State<SearchAndFilterContent> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+    if (picked != null) {
+      final filterProvider = Provider.of<SearchFilterProvider>(context, listen: false);
+      filterProvider.setSelectedDate(picked);
     }
   }
 
   void _applyFilters() {
-    final Map<String, dynamic> filters = {
-      'searchQuery': _searchController.text,
-      'trxnType': _selectedTrxnType,
-      'period': _selectedPeriod,
-      'dateFilter': _selectedDateFilter,
-      'customDate': _selectedDate != null ?
-      "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}" : null,
-    };
+    final filterProvider = Provider.of<SearchFilterProvider>(context, listen: false);
+
+    // Update the provider with current filter values
+    filterProvider.setSearchQuery(_searchController.text);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Filters applied: ${filters.toString()}'),
-        duration: const Duration(seconds: 2),
+      const SnackBar(
+        content: Text('Filters applied successfully'),
+        duration: Duration(seconds: 2),
       ),
     );
 
     Navigator.pop(context);
   }
 
+  void _clearAllFilters() {
+    _searchController.clear();
+    final filterProvider = Provider.of<SearchFilterProvider>(context, listen: false);
+    filterProvider.clearAllFilters();
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with current filter values
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final filterProvider = Provider.of<SearchFilterProvider>(context, listen: false);
+      _searchController.text = filterProvider.searchQuery;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filterProvider = Provider.of<SearchFilterProvider>(context);
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Text(
-            'Search & Filter',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          // Header with Clear button
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Search & Filter',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (filterProvider.hasActiveFilters)
+                TextButton(
+                  onPressed: _clearAllFilters,
+                  child: Text(
+                    'Clear All',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
-      
+
           // Search Section
           TextField(
             controller: _searchController,
@@ -118,55 +147,49 @@ class _SearchAndFilterContentState extends State<SearchAndFilterContent> {
             },
           ),
           const SizedBox(height: 10),
-      
+
           // Filter by Trxn Type
           BuildFilterDropdown(
-            value: _selectedTrxnType,
+            value: filterProvider.selectedTrxnType,
             items: trxnTypes,
             onChanged: (value) {
-              setState(() {
-                _selectedTrxnType = value;
-              });
+              filterProvider.setSelectedTrxnType(value);
             },
             hintText: 'Filter by Trxn Type',
           ),
           const SizedBox(height: 10),
-      
+
           // Filter by Period
           BuildFilterDropdown(
-            value: _selectedPeriod,
+            value: filterProvider.selectedPeriod,
             items: periods,
             onChanged: (value) {
-              setState(() {
-                _selectedPeriod = value;
-              });
+              filterProvider.setSelectedPeriod(value);
             },
             hintText: 'Filter by Period',
           ),
           const SizedBox(height: 10),
-      
+
           // Filter by Date
           BuildFilterDropdown(
-            value: _selectedDateFilter,
+            value: filterProvider.selectedDateFilter,
             items: dateFilters,
             onChanged: (value) {
-              setState(() {
-                _selectedDateFilter = value;
-                if (value != 'Custom') {
-                  _selectedDate = null;
-                }
-              });
+              filterProvider.setSelectedDateFilter(value);
+              if (value != 'Custom') {
+                filterProvider.setSelectedDate(null);
+              }
             },
             hintText: 'Filter by Date',
           ),
           const SizedBox(height: 10),
-      
-          // Custom Date Picker - Only show if Custom is selected from Date filter
-          if (_selectedDateFilter == 'Custom')
+
+          // Custom Date Picker
+          if (filterProvider.selectedDateFilter == 'Custom')
             Column(
               children: [
                 DateFilter(
-                  selectedDate: _selectedDate,
+                  selectedDate: filterProvider.selectedDate,
                   onTap: () => _selectDate(context),
                   hintText: 'Select Date',
                   labelText: 'Select Custom Date',
@@ -174,7 +197,7 @@ class _SearchAndFilterContentState extends State<SearchAndFilterContent> {
                 const SizedBox(height: 10),
               ],
             ),
-      
+
           // Apply Button
           SizedBox(
             width: double.infinity,
@@ -189,7 +212,7 @@ class _SearchAndFilterContentState extends State<SearchAndFilterContent> {
                 ),
               ),
               child: Text(
-                'Apply',
+                'Apply Filters',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

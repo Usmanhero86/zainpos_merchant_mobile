@@ -294,85 +294,199 @@ class _TerminalsTabState extends State<TerminalsTab> {
   }
 
   void _showFilterDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Consumer<TerminalProvider>(
-          builder: (context, provider, child) {
-            final stats = provider.statistics;
+    final mediaQuery = MediaQuery.of(context);
+    final isLargeScreen = mediaQuery.size.width > 600;
 
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Filter Terminals',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${stats['total']} terminals found',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+    if (isLargeScreen) {
+      // 🖥️ Use dialog for large screens
+      showDialog(
+        context: context,
+        builder: (context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            insetPadding: const EdgeInsets.all(24),
+            child: Consumer<TerminalProvider>(
+              builder: (context, provider, child) {
+                final stats = provider.statistics;
 
-                  // Filter options
-                  ...TerminalFilter.values.map((filter) {
-                    final count = _getFilterCount(provider, filter);
+                return Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Filter Terminals',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '${stats['total']} terminals found',
+                            style: const TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                          const SizedBox(height: 16),
 
-                    return ListTile(
-                      leading: Icon(
-                        filter.icon,
-                        color: provider.currentFilter == filter
-                            ? Colors.blue
-                            : Colors.grey,
+                          // Filter options
+                          ...TerminalFilter.values.map((filter) {
+                            final count = _getFilterCount(provider, filter);
+                            final selected = provider.currentFilter == filter;
+
+                            return ListTile(
+                              leading: Icon(
+                                filter.icon,
+                                color: selected ? Colors.blue : Colors.grey,
+                                size: 26,
+                              ),
+                              title: Text(
+                                filter.displayName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                                  color: selected ? Colors.blue : Colors.black,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '$count terminals • ${filter.description}',
+                                style: const TextStyle(fontSize: 13, color: Colors.grey),
+                              ),
+                              trailing: selected
+                                  ? const Icon(Icons.check, color: Colors.blue)
+                                  : null,
+                              onTap: () {
+                                _applyFilter(filter);
+                                Navigator.pop(context);
+                              },
+                            );
+                          }).toList(),
+
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.clear),
+                              label: const Text('Clear Filter'),
+                              onPressed: () {
+                                _applyFilter(TerminalFilter.all);
+                                Navigator.pop(context);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: const BorderSide(color: Colors.blue),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      title: Text(filter.displayName),
-                      subtitle: Text(
-                        '$count terminals • ${filter.description}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      trailing: provider.currentFilter == filter
-                          ? const Icon(Icons.check, color: Colors.blue)
-                          : null,
-                      onTap: () {
-                        _applyFilter(filter);
-                        Navigator.pop(context);
-                      },
-                    );
-                  }).toList(),
-
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        _applyFilter(TerminalFilter.all);
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Clear Filter'),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+                );
+              },
+            ),
+          );
+        },
+      );
+    } else {
+      // 📱 Use bottom sheet for small screens
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.white,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (context) {
+          return Consumer<TerminalProvider>(
+            builder: (context, provider, child) {
+              final stats = provider.statistics;
+
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      'Filter Terminals',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${stats['total']} terminals found',
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Filter options
+                    ...TerminalFilter.values.map((filter) {
+                      final count = _getFilterCount(provider, filter);
+                      final selected = provider.currentFilter == filter;
+
+                      return ListTile(
+                        leading: Icon(
+                          filter.icon,
+                          color: selected ? Colors.blue : Colors.grey,
+                        ),
+                        title: Text(filter.displayName),
+                        subtitle: Text(
+                          '$count terminals • ${filter.description}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: selected
+                            ? const Icon(Icons.check, color: Colors.blue)
+                            : null,
+                        onTap: () {
+                          _applyFilter(filter);
+                          Navigator.pop(context);
+                        },
+                      );
+                    }).toList(),
+
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.clear),
+                        label: const Text('Clear Filter'),
+                        onPressed: () {
+                          _applyFilter(TerminalFilter.all);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
   }
 
   int _getFilterCount(TerminalProvider provider, TerminalFilter filter) {

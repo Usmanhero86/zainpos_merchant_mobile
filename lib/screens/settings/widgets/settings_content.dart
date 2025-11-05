@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:zainpos_merchant_mobile/screens/settings/widgets/setting_item.dart';
+import 'package:zainpos_merchant_mobile/provider/settings_provider.dart'; // Add this import
 
 class SettingsContent extends StatefulWidget {
-  final bool initialTransfersEnabled;
-  final bool initialBalanceEnabled;
-  final bool initialReprintEnabled;
-  final Function(Map<String, bool>)? onSettingsApplied;
-
-  const SettingsContent({
-    super.key,
-    required this.initialTransfersEnabled,
-    required this.initialBalanceEnabled,
-    required this.initialReprintEnabled,
-    this.onSettingsApplied,
-  });
+  const SettingsContent({super.key});
 
   @override
   State<SettingsContent> createState() => _SettingsContentState();
@@ -27,22 +18,26 @@ class _SettingsContentState extends State<SettingsContent> {
   @override
   void initState() {
     super.initState();
-    _transfersEnabled = widget.initialTransfersEnabled;
-    _balanceEnabled = widget.initialBalanceEnabled;
-    _reprintEnabled = widget.initialReprintEnabled;
+    // Initialize with current provider values
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    _transfersEnabled = settingsProvider.transfersEnabled;
+    _balanceEnabled = settingsProvider.balanceEnabled;
+    _reprintEnabled = settingsProvider.reprintEnabled;
   }
 
   void applySettings() {
-    final Map<String, bool> settings = {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+    // Update the provider with new settings
+    settingsProvider.applySettings({
       'transfers': _transfersEnabled,
       'balance': _balanceEnabled,
       'reprint': _reprintEnabled,
-    };
-    widget.onSettingsApplied?.call(settings);
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Settings applied: $settings'),
+        content: Text('Settings applied successfully'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -92,7 +87,7 @@ class _SettingsContentState extends State<SettingsContent> {
           ),
 
           SizedBox(height: h * 0.002),
-           Divider(),
+          Divider(),
           SizedBox(height: h * 0.002),
 
           SizedBox(

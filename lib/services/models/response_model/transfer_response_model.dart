@@ -1,103 +1,117 @@
-class TransferResponse {
-  final String? transactionId;
-  final String? reference;
-  final String? status;
-  final String? message;
-  final bool? error;
-  final String? code;
-  final DateTime? timestamp;
-  final double? amount;
-  final String? currency;
-  final bool isSuccess;
+import 'package:flutter/material.dart';
 
-  // Error specific fields
+import 'base_response_model.dart';
+
+class TransferResponse {
+  final bool isSuccess;
+  final bool success;
+  final String? message;
+  final String? reference;
+  final String? transactionId;
+  final bool error;
   final String? errorType;
-  final String? errorStatus;
+  final String? code;
+  final String? description;
 
   TransferResponse({
-    this.transactionId,
-    this.reference,
-    this.status,
+    required this.isSuccess,
+    required this.success,
     this.message,
-    this.error,
-    this.isSuccess = true,
-    this.code,
-    this.timestamp,
-    this.amount,
-    this.currency,
+    this.reference,
+    this.transactionId,
+    required this.error,
     this.errorType,
-    this.errorStatus,
+    this.code,
+    this.description,
   });
 
   factory TransferResponse.fromJson(Map<String, dynamic> json) {
-    // Check if this is an error response based on status code or error field
-    final hasError = json['error'] != null ||
-        json['status'] == 'BAD_REQUEST' ||
-        json['code'] != '00';
+    // More robust success detection
+    final String? description = json['description']?.toString();
+    final String? code = json['code']?.toString();
+    final String? status = json['status']?.toString();
 
-    if (hasError) {
-      // This is an error response
-      return TransferResponse(
-        isSuccess: false,
-        errorType: json['error']?.toString(),
-        message: json['message']?.toString(),
-        errorStatus: json['status']?.toString(),
-        error: true,
-        code: json['code']?.toString(),
-      );
+    // Check data object
+    final Map<String, dynamic>? data = json['data'] is Map ? json['data'] as Map<String, dynamic> : null;
+    final String? dataStatus = data?['status']?.toString();
+
+    // Multiple success indicators
+    final bool hasSuccessDescription = description?.toLowerCase().contains('success') == true;
+    final bool hasSuccessCode = code == '200 OK' || status == '200 OK';
+    final bool hasSuccessData = dataStatus == 'success';
+    final bool hasNoError = json['error'] == null || json['error'] == false;
+
+    // Final success determination
+    final bool isSuccess = (hasSuccessDescription || hasSuccessCode || hasSuccessData) && hasNoError;
+
+    // Extract reference
+    final String? reference = data?['txnRef']?.toString() ??
+        data?['paymentRef']?.toString() ??
+        json['reference']?.toString();
+
+    return TransferResponse(
+      isSuccess: isSuccess,
+      success: isSuccess,
+      message: description,
+      reference: reference,
+      transactionId: data?['txnRef']?.toString(),
+      error: !isSuccess,
+      errorType: isSuccess ? null : json['errorType']?.toString(),
+      code: code,
+      description: description,
+    );
+  }
+
+  factory TransferResponse.fromError(ErrorResponse error) {
+    return TransferResponse(
+      isSuccess: false,
+      success: false,
+      message: error.message,
+      error: true,
+      errorType: error.error,
+      code: error.statusCode?.toString(),
+    );
+  }
+
+  // Helper methods for common error types
+  bool get isInvalidPin =>
+      errorType?.toLowerCase().contains('pin') == true ||
+          message?.toLowerCase().contains('pin') == true ||
+          description?.toLowerCase().contains('pin') == true ||
+          code?.toLowerCase().contains('pin') == true;
+
+  bool get isInsufficientFunds =>
+      errorType?.toLowerCase().contains('balance') == true ||
+          errorType?.toLowerCase().contains('insufficient') == true ||
+          message?.toLowerCase().contains('insufficient') == true ||
+          description?.toLowerCase().contains('insufficient') == true ||
+          message?.toLowerCase().contains('balance') == true ||
+          code == 'INSUFFICIENT_FUNDS';
+
+  bool get hasError => error || !isSuccess;
+
+  String get displayMessage {
+    if (isSuccess) {
+      return message ?? 'Transfer completed successfully';
     } else {
-      // This is a success response
-      return TransferResponse(
-        transactionId: json['transaction_id'] ?? json['transactionId'],
-        reference: json['reference'] ?? json['ref'],
-        status: json['status'],
-        message: json['message'],
-        error: json['error'],
-        code: json['code'],
-        timestamp: json['timestamp'] != null
-            ? DateTime.tryParse(json['timestamp'])
-            : DateTime.now(),
-        amount: json['amount'] != null
-            ? double.tryParse(json['amount'].toString())
-            : null,
-        currency: json['currency'] ?? 'NGN',
-      );
+      if (isInvalidPin) {
+        return 'Invalid PIN. Please check and try again.';
+      } else if (isInsufficientFunds) {
+        return 'Insufficient funds to complete this transfer.';
+      }
+      return message ?? description ?? 'Transfer failed. Please try again.';
     }
   }
 
   Map<String, dynamic> toJson() => {
-    'transaction_id': transactionId,
-    'reference': reference,
-    'status': status,
+    'isSuccess': isSuccess,
+    'Success': success,
     'message': message,
+    'reference': reference,
+    'transactionId': transactionId,
     'error': error,
-    'code': code,
-    'timestamp': timestamp?.toIso8601String(),
-    'amount': amount,
-    'currency': currency,
     'errorType': errorType,
-    'errorStatus': errorStatus,
+    'code': code,
+    'description': description,
   };
-
-  bool get Success => isSuccess && (code == '00' || status == 'success');
-  bool get hasError => error == true || errorType != null || !isSuccess;
-
-  String get displayMessage {
-    if (hasError) {
-      return message ?? 'Transfer failed';
-    }
-    return message ?? 'Transfer completed successfully';
-  }
-
-  String get displayStatus {
-    if (hasError) return 'Failed';
-    if (status != null) return status!;
-    return Success ? 'Success' : 'Pending';
-  }
-
-  // Helper methods for common error types
-  bool get isInvalidPin => errorType == 'Invalid PIN' || message?.toLowerCase().contains('pin') == true;
-  bool get isBadRequest => errorStatus == 'BAD_REQUEST';
-  bool get isInsufficientFunds => errorType?.toLowerCase().contains('insufficient') == true ||
-      message?.toLowerCase().contains('insufficient') == true;
 }

@@ -1,26 +1,39 @@
 import 'package:flutter/material.dart';
 import '../../../provider/card_purchase_provider.dart';
+import '../../../services/models/response_model/card_purchase_history_response.dart';
 import '../transaction_details_screen.dart' show TransactionDetailsScreen;
 
 class CardTransactionsList extends StatelessWidget {
   final CardPurchaseProvider provider;
+  final List<CardPurchaseItem> filteredData;
+
 
   const CardTransactionsList({
     super.key,
     required this.provider,
+    required this.filteredData,
   });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final scale = screenWidth * 0.04;
+    // Use filteredData instead of provider.purchases
+    if (filteredData.isEmpty) {
+      return Center(
+        child: Text(
+          'No card transactions found',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
 
     return ListView.builder(
       padding: EdgeInsets.all(scale * 0.8),
       physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: provider.purchases.length,
+      itemCount: filteredData.length,
       itemBuilder: (_, index) {
-        final item = provider.purchases[index];
+        final item = filteredData[index];
         final amount = double.tryParse(item.amount.toString()) ?? 0;
         final formattedDate =
             '${item.txnDate.year}-${item.txnDate.month.toString().padLeft(2, '0')}-${item.txnDate.day.toString().padLeft(2, '0')} '

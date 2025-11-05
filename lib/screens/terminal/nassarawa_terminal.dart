@@ -7,6 +7,8 @@ import 'package:zainpos_merchant_mobile/screens/transfers/transfer_screen.dart';
 import '../../provider/bank_deposit_provider.dart';
 import '../../provider/card_purchase_provider.dart';
 import '../../provider/payout_provider.dart';
+import '../../provider/serach_Filter_provider.dart';
+import '../../provider/settings_provider.dart';
 import '../../services/api/api_service.dart';
 import '../../services/models/response_model/terminal_response.dart';
 import '../../services/models/response_model/wallet_balance_response.dart';
@@ -44,11 +46,18 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
     });
 
     Future.microtask(() {
-      Provider.of<BankDepositHistoryProvider>(context, listen: false,).fetchBankDeposits();
-      Provider.of<CardPurchaseProvider>(context, listen: false,).loadCardPurchases();
+      debugPrint("=== INITIALIZING TERMINAL SCREEN ===");
+
+      Provider.of<BankDepositHistoryProvider>(context, listen: false).fetchBankDeposits();
+
+      final cardProvider = Provider.of<CardPurchaseProvider>(context, listen: false);
+      debugPrint("Card provider state - isLoading: ${cardProvider.isLoading}, items: ${cardProvider.purchases.length}");
+      cardProvider.loadCardPurchases();
+
       Provider.of<PayoutProvider>(context, listen: false).loadPayoutHistory();
       _fetchWalletBalance();
     });
+
   }
 
   Future<void> _fetchWalletBalance() async {
@@ -102,7 +111,18 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
   }
 
   String _getDisplayBalance(double balanceAmount) {
-    if (_obscureBalance) return '••••••';
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: true);
+
+    // If balance is disabled in settings, show nothing
+    if (!settingsProvider.balanceEnabled) {
+      return '••••••';
+    }
+
+    // If balance is enabled but user wants to obscure it
+    if (_obscureBalance) {
+      return '••••••';
+    }
+
     double displayAmount = balanceAmount / 100;
     return '₦${displayAmount.toStringAsFixed(2)}';
   }
@@ -141,6 +161,7 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
     final titleSize = isTablet ? 20.0 : 12.0;
     final cardIconSize = isTablet ? 48.0 : 38.0;
     final terminal = widget.terminal;
+    final settingsProvider = Provider.of<SettingsProvider>(context);
 
 
     return Scaffold(
@@ -161,21 +182,22 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
             icon: Image.asset('assets/logos/settings-02.png', height: 24,),),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: settingsProvider.transfersEnabled
+          ? FloatingActionButton(
         backgroundColor: Colors.blue,
         onPressed: () {
-          // Get the current wallet balance
-          final currentBalance = _walletBalance?.data.balanceAmount ?? 0.0;
+          final currentBalance = _walletBalance?.data?.balanceAmount ?? 0.0;
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => TransferScreen(
               walletBalance: currentBalance,
+              terminal: widget.terminal,
             )
             ),
           );
         },
         child: Image.asset('assets/logos/sendIcon.png', height: 24, width: 24),
-      ),
+      ) : null,
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: SingleChildScrollView(
@@ -191,6 +213,7 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
                   children: [
                     // Virtual Account and Balance Cards
                     Card(
+                      color: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),),
                       elevation: 1,
                       child: Padding(
@@ -247,7 +270,7 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
                                                 _getDisplayBalance(
                                                   _walletBalance
                                                           ?.data
-                                                          .balanceAmount ??
+                                                          ?.balanceAmount ??
                                                       0.0,
                                                 ),
                                                 style: TextStyle(
@@ -338,51 +361,147 @@ class _NassarawaTerminalScreenState extends State<NassarawaTerminalScreen> with 
 
                     SizedBox(height: basePadding / 2),
 
-                    SizedBox(
-                      height: 400,
-                      child: TabBarView(
-                        controller: _tabController,
+              //    TabBarView section
+        SizedBox(
+          height: 400,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+
+
+              Consumer<BankDepositHistoryProvider>(
+                builder: (context, provider, _) {
+                  final filterProvider = Provider.of<SearchFilterProvider>(context);
+                  final filters = {
+                    'searchQuery': filterProvider.searchQuery,
+                    'trxnType': filterProvider.selectedTrxnType,
+                    'period': filterProvider.selectedPeriod,
+                    'dateFilter': filterProvider.selectedDateFilter,
+                    'customDate': filterProvider.selectedDate != null
+                        ? "${filterProvider.selectedDate!.year}-${filterProvider.selectedDate!.month.toString().padLeft(2, '0')}-${filterProvider.selectedDate!.day.toString().padLeft(2, '0')}"
+                        : null,
+                  };
+                  final filteredData = provider.getFilteredDeposits(filters);
+
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (filteredData.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Consumer<BankDepositHistoryProvider>(
-                            builder: (context, provider, _) {
-                              if (provider.isLoading) {
-                                return const Center(child: CircularProgressIndicator(),);
-                              }
-                              if (provider.deposits.isEmpty) {
-                                return const Center(child: Text('No transactions found'),);
-                              }
-                              return TransactionsList(data: provider.deposits);
-                            },
+                          Text(
+                            filterProvider.hasActiveFilters
+                                ? 'No transactions match your filters'
+                                : 'No transactions found',
+                            style: TextStyle(color: Colors.grey),
                           ),
-                          Consumer<CardPurchaseProvider>(
-                            builder: (context, provider, _) {
-                              if (provider.isLoading &&
-                                  provider.purchases.isEmpty) {
-                                return const Center(child: CircularProgressIndicator(),);
-                              }
-                              if (provider.purchases.isEmpty) {
-                                return const Center(child: Text('No card transactions found'),);
-                              }
-                              return CardTransactionsList(provider: provider);
-                            },
-                          ),
-                          Consumer<PayoutProvider>(
-                            builder: (context, provider, _) {
-                              if (provider.isLoading) {
-                                return const Center(child: CircularProgressIndicator(),);
-                              }
-                              if (provider.payoutResponse?.data.isEmpty ??
-                                  true) {
-                                return const Center(child: Text('No payout transactions found'),);
-                              }
-                              return const PayoutTransactionsScreen();
-                            },
-                          ),
+                          if (filterProvider.hasActiveFilters)
+                            TextButton(
+                              onPressed: () {
+                                filterProvider.clearAllFilters();
+                              },
+                              child: Text('Clear Filters'),
+                            ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  }
+                  return TransactionsList(data: filteredData);
+                },
+              ),
+
+              Consumer<CardPurchaseProvider>(
+                builder: (context, provider, _) {
+                  final filterProvider = Provider.of<SearchFilterProvider>(context);
+                  final filters = {
+                    'searchQuery': filterProvider.searchQuery,
+                    'trxnType': filterProvider.selectedTrxnType,
+                    'period': filterProvider.selectedPeriod,
+                    'dateFilter': filterProvider.selectedDateFilter,
+                    'customDate': filterProvider.selectedDate != null
+                        ? "${filterProvider.selectedDate!.year}-${filterProvider.selectedDate!.month.toString().padLeft(2, '0')}-${filterProvider.selectedDate!.day.toString().padLeft(2, '0')}"
+                        : null,
+                  };
+                  final filteredData = provider.getFilteredPurchases(filters);
+
+                  if (provider.isLoading && provider.purchases.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (filteredData.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            filterProvider.hasActiveFilters
+                                ? 'No card transactions match your filters'
+                                : 'No card transactions found',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          if (filterProvider.hasActiveFilters)
+                            TextButton(
+                              onPressed: () {
+                                filterProvider.clearAllFilters();
+                              },
+                              child: Text('Clear Filters'),
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+                  return CardTransactionsList(provider: provider, filteredData: filteredData);
+                },
+              ),
+
+              Consumer<PayoutProvider>(
+                builder: (context, provider, _) {
+                  final filterProvider = Provider.of<SearchFilterProvider>(context);
+                  final filters = {
+                    'searchQuery': filterProvider.searchQuery,
+                    'trxnType': filterProvider.selectedTrxnType,
+                    'period': filterProvider.selectedPeriod,
+                    'dateFilter': filterProvider.selectedDateFilter,
+                    'customDate': filterProvider.selectedDate != null
+                        ? "${filterProvider.selectedDate!.year}-${filterProvider.selectedDate!.month.toString().padLeft(2, '0')}-${filterProvider.selectedDate!.day.toString().padLeft(2, '0')}"
+                        : null,
+                  };
+                  final filteredData = provider.getFilteredPayouts(filters);
+
+                  if (provider.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (filteredData.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            filterProvider.hasActiveFilters
+                                ? 'No payout transactions match your filters'
+                                : 'No payout transactions found',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          if (filterProvider.hasActiveFilters)
+                            TextButton(
+                              onPressed: () {
+                                filterProvider.clearAllFilters();
+                              },
+                              child: Text('Clear Filters'),
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+                  return PayoutTransactionsScreen(filteredData: filteredData);
+                },
+              ),
+            ],
+          ),
+        ),
+        ]
+      ),
               ),
             ],
           ),

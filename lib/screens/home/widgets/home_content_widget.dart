@@ -11,6 +11,7 @@ class HomeContent extends StatelessWidget {
   final double screenWidth;
   final double screenHeight;
   final double padding;
+  final String? accountNumber; // Add this parameter
 
   const HomeContent({
     super.key,
@@ -18,6 +19,7 @@ class HomeContent extends StatelessWidget {
     required this.screenWidth,
     required this.screenHeight,
     required this.padding,
+    this.accountNumber, // Add this
   });
 
   @override
@@ -60,8 +62,8 @@ class HomeContent extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Wallet Balance Card
-          const WalletBalanceCard(),
+          // Wallet Balance Card with account number
+          WalletBalanceCard(accountNumber: accountNumber),
 
           const SizedBox(height: 20),
 

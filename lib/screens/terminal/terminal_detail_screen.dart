@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:zainpos_merchant_mobile/screens/terminal/widgets/transaction_list.dart';
-import 'package:zainpos_merchant_mobile/screens/transactions/widgets/transaction_list.dart';
 import '../../services/api/api_service.dart';
 import '../../services/models/response_model/home_response.dart';
 import '../../widgets/currency_converter.dart';
 import '../../widgets/settings_bottom_sheet.dart';
-import '../home/tabs/transaction_screen.dart';
 import '../transactions/card_transaction_screen.dart';
 import '../transactions/payout_transaction_screen.dart';
 
@@ -40,13 +38,13 @@ class _TerminalDetailScreenState extends State<TerminalDetailScreen>
     try {
       final apiService = ApiService();
       final response = await apiService.getTerminalWalletBalance(
-        widget.terminal.virtualAccountNumber!,
+        widget.terminal.virtualAccountNumber,
       );
 
       setState(() {
         if (response != null) {
           walletBalance = CurrencyFormatter.getAmountWithCurrency(
-            response.data.balanceAmount,
+            response.data?.balanceAmount,
           );
         } else {
           walletBalance = "₦0.00";
@@ -283,7 +281,7 @@ class _TerminalDetailScreenState extends State<TerminalDetailScreen>
               children: [
                 TransactionList(),
                 CardTransactionsScreen(),
-                PayoutTransactionsScreen(),
+                PayoutTransactionsScreen(filteredData: [],),
               ],
             ),
           ),
@@ -294,7 +292,7 @@ class _TerminalDetailScreenState extends State<TerminalDetailScreen>
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => PayoutTransactionsScreen()),
+              MaterialPageRoute(builder: (context) => PayoutTransactionsScreen(filteredData: [],)),
             );
           },
           backgroundColor: Colors.blue,

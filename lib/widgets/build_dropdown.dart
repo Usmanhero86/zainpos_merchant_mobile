@@ -20,13 +20,13 @@ class BuildDropdown extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<String>(
-          value: value,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
               child: Text(item),
             );
           }).toList(),
+          value: value,
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,

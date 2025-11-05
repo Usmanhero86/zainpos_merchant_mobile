@@ -48,27 +48,24 @@ class TransferSuccessWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-
-    // Fixed height: exactly 1/3 of screen
     final containerHeight = screenHeight / 3;
 
     // Calculate responsive sizes based on container height
-    final iconSize = containerHeight * 0.2; // 20% of container height
-    final titleFontSize = containerHeight * 0.1; // 10% of container height
-    final subtitleFontSize = containerHeight * 0.07; // 7% of container height
-    final detailFontSize = containerHeight * 0.06; // 6% of container height
-    final buttonFontSize = containerHeight * 0.07; // 7% of container height
-    final iconButtonSize = containerHeight * 0.08; // 8% of container height
+    final iconSize = containerHeight * 0.2;
+    final titleFontSize = containerHeight * 0.1;
+    final subtitleFontSize = containerHeight * 0.07;
+    final detailFontSize = containerHeight * 0.06;
+    final buttonFontSize = containerHeight * 0.07;
+    final iconButtonSize = containerHeight * 0.08;
 
     // Calculate responsive padding and spacing
     final horizontalPadding = screenWidth * 0.05;
     final verticalPadding = containerHeight * 0.03;
     final smallSpacing = containerHeight * 0.01;
     final mediumSpacing = containerHeight * 0.02;
-    final largeSpacing = containerHeight * 0.03;
 
     return Container(
-      height: containerHeight, // Exactly 1/3 of screen height
+      height: containerHeight,
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.only(
           topRight: Radius.circular(20),
@@ -80,7 +77,7 @@ class TransferSuccessWidget extends StatelessWidget {
         horizontal: horizontalPadding,
         vertical: verticalPadding,
       ),
-      child: SingleChildScrollView( // Allow scrolling for overflow content
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -124,7 +121,7 @@ class TransferSuccessWidget extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: subtitleFontSize.clamp(12, 16), // Min 12, max 16
+                fontSize: subtitleFontSize.clamp(12, 16),
                 color: textColor?.withOpacity(0.7) ?? Colors.grey.shade600,
               ),
             ),
@@ -343,14 +340,6 @@ class TransferSuccessWidget extends StatelessWidget {
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]},',
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
-
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
 

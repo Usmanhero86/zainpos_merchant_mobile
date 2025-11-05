@@ -11,13 +11,29 @@ class CardPurchaseHistoryResponse {
 
   factory CardPurchaseHistoryResponse.fromJson(Map<String, dynamic> json) {
     return CardPurchaseHistoryResponse(
-      data: (json['data'] as List)
-          .map((e) => CardPurchaseItem.fromJson(e))
-          .toList(),
-      pagination: Pagination.fromJson(json['pagination']),
+      data: (json['data'] as List<dynamic>?)
+          ?.map((e) => CardPurchaseItem.fromJson(e))
+          .toList() ?? [],
+      pagination: Pagination.fromJson(json['pagination'] ?? {}),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'data': data.map((e) => e.toJson()).toList(),
+      'pagination': pagination.toJson(),
+    };
+  }
+
+  // Helper methods for pagination
+  bool get hasMoreData {
+    return data.length >= pagination.limit &&
+        (pagination.totalCount > (pagination.page * pagination.limit));
+  }
+
+  int get nextPage => pagination.page + 1;
 }
+// REMOVE THE EXTRA CLOSING BRACE FROM HERE
 
 class CardPurchaseItem {
   final String terminalId;
@@ -75,5 +91,26 @@ class CardPurchaseItem {
       cardAid: json['card_aid'],
       cardTrack2Data: json['card_track2_data'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'terminal_id': terminalId,
+      'terminal_name': terminalName,
+      'card_pan': cardPan,
+      'card_type': cardType,
+      'txn_status': txnStatus,
+      'txn_date': txnDate.toIso8601String(),
+      'txn_rrn': txnRrn,
+      'amount': amount,
+      'amount_after_charges': amountAfterCharges,
+      'charges': charges,
+      'txn_ref': txnRef,
+      'response_code': responseCode,
+      'zainpay_status': zainpayStatus,
+      'txn_stan': txnStan,
+      'card_aid': cardAid,
+      'card_track2_data': cardTrack2Data,
+    };
   }
 }
